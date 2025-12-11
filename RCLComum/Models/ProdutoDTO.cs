@@ -5,7 +5,7 @@
 
     public class ProdutoDTO     //Produto Data Transfer Object que virão da API (RCLApi) para a RCLComum
     {
-        public int Id { get; set; }
+        public int Id { get; set; } 
         public string Nome { get; set; } = string.Empty;
         public string Descricao { get; set; } = string.Empty;
         public decimal PrecoBase { get; set; } // Preço definido pelo Fornecedor [cite: 264, 387]
