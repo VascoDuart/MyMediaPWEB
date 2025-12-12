@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RCLCompras", "RCLCompras\RC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.data", "MyMedia.data\MyMedia.data.csproj", "{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.API", "MyMedia.API\MyMedia.API.csproj", "{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
