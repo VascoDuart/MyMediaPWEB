@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36429.23 d17.14
+VisualStudioVersion = 17.14.36429.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProdutosMAUI", "ProdutosMAUI\ProdutosMAUI.csproj", "{F8E28F08-DCBB-4932-A14C-436EA7EDA890}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RCLProdutos", "RCLProdutos\RCLProdutos.csproj", "{0A0FB379-98EF-42C3-9E53-EB32221D7B2D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RCLCompras", "RCLCompras\RCLCompras.csproj", "{D36A645E-4412-414D-B846-D0D7AE410538}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.data", "MyMedia.data\MyMedia.data.csproj", "{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,10 @@ Global
 		{D36A645E-4412-414D-B846-D0D7AE410538}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D36A645E-4412-414D-B846-D0D7AE410538}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D36A645E-4412-414D-B846-D0D7AE410538}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDBC5623-B977-4EF2-B155-C8E24A81A1A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
