@@ -53,6 +53,24 @@ namespace MyMedia.Data.Seed {
                 }
             }
 
+            var clienteEmail = "cliente@test.pt";
+            if (await userManager.FindByEmailAsync(clienteEmail) == null)
+            {
+                var clienteUser = new ApplicationUser
+                {
+                    UserName = clienteEmail,
+                    Email = clienteEmail,
+                    NomeCompleto = "Cliente de Exemplo",
+                    IsAtivo = true 
+                };
+
+                var result = await userManager.CreateAsync(clienteUser, "P@ssword123");
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(clienteUser, "Cliente");
+                }
+            }
 
             var fornecedorEmail = "fornecedor@test.pt";
             if (await userManager.FindByEmailAsync(fornecedorEmail) == null) {

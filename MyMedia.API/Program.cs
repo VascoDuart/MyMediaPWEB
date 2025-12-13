@@ -41,6 +41,17 @@ builder.Services.AddAuthentication(options => {
     };
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyCorsPolicy",
+        policy =>
+        {
+            policy.AllowAnyOrigin() // Permite qualquer domínio/frontend
+                  .AllowAnyHeader()   // Permite qualquer cabeçalho (incluindo o JWT Bearer)
+                  .AllowAnyMethod();  // Permite GET, POST, PUT, DELETE
+        });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -88,6 +99,8 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("MyCorsPolicy");
 
 app.UseAuthentication();
 
