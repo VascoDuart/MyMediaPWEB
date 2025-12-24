@@ -27,6 +27,7 @@ namespace MyMedia.API.Controllers {
                     Titulo = p.Titulo,
                     Descricao = p.Descricao,
                     PrecoFinal = p.PrecoFinal,
+                    Stock = p.Stock,
                     CategoriaNome = p.Categoria.Nome,
                     FornecedorNome = p.Fornecedor.NomeCompleto,
                     Estado = p.Estado.ToString()
@@ -47,6 +48,7 @@ namespace MyMedia.API.Controllers {
                 Titulo = p.Titulo,
                 Descricao = p.Descricao,
                 PrecoFinal = p.PrecoFinal,
+                Stock = p.Stock,
                 CategoriaNome = p.Categoria.Nome,
                 FornecedorNome = p.Fornecedor.NomeCompleto,
                 Estado = p.Estado.ToString()
