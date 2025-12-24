@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace MyMedia.Data.Seed {
     public static class DbInitializer {
         public static async Task SeedRolesAndUsers(IServiceProvider serviceProvider) {
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -19,6 +20,16 @@ namespace MyMedia.Data.Seed {
                 }
             }
 
+            if (!await context.Categorias.AnyAsync()) {
+                var categorias = new List<Categoria> {
+                    new Categoria { Nome = "Filmes", Descricao = "Suportes de vídeo e cinema" },
+                    new Categoria { Nome = "Música", Descricao = "Discos, CDs e álbuns" },
+                    new Categoria { Nome = "Acessórios", Descricao = "Complementos para material media" },
+                    new Categoria { Nome = "Letras", Descricao = "Letras e composições" }
+                };
+                context.Categorias.AddRange(categorias);
+                await context.SaveChangesAsync();
+            }
 
             var adminEmail = "admin@mymedia.pt";
             if (await userManager.FindByEmailAsync(adminEmail) == null) {

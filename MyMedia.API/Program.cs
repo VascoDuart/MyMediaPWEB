@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using MyMedia.API.Services;
 using MyMedia.Data;
 using MyMedia.Data.Models;
+using MyMedia.Data.Seed;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
