@@ -47,9 +47,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: "MyCorsPolicy",
         policy =>
         {
-            policy.AllowAnyOrigin() // Permite qualquer domínio/frontend
-                  .AllowAnyHeader()   // Permite qualquer cabeçalho (incluindo o JWT Bearer)
-                  .AllowAnyMethod();  // Permite GET, POST, PUT, DELETE
+            policy.AllowAnyOrigin() 
+                  .AllowAnyHeader()   
+                  .AllowAnyMethod(); 
         });
 });
 

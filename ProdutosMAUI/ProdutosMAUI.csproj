@@ -64,4 +64,9 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\RCLAPI\RCLAPI.csproj" />
+      <ProjectReference Include="..\RCLProdutos\RCLProdutos.csproj" />
+    </ItemGroup>
+
 </Project>

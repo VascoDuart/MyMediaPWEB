@@ -1,23 +1,25 @@
 ﻿using Microsoft.Extensions.Logging;
+using RCLAPI.Services;
 
-namespace ProdutosMAUI
-{
-    public static class MauiProgram
-    {
-        public static MauiApp CreateMauiApp()
-        {
+namespace ProdutosMAUI {
+    public static class MauiProgram {
+        public static MauiApp CreateMauiApp() {
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
-                .ConfigureFonts(fonts =>
-                {
+                .ConfigureFonts(fonts => {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
             builder.Services.AddMauiBlazorWebView();
 
+            builder.Services.AddScoped(sp => new HttpClient {
+                BaseAddress = new Uri("https://localhost:7001/") 
+            });
+
+            builder.Services.AddScoped<IProdutoService, ProdutoService>();
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

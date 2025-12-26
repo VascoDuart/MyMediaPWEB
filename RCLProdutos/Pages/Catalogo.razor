@@ -1,0 +1,46 @@
+﻿@page "/catalogo"
+@using RCLAPI.Services
+@using RCLAPI.DTOs
+@inject IProdutoService ProdutoService
+
+<PageTitle>Catálogo de Multimédia</PageTitle>
+
+<div class="container mt-4">
+    <h3 class="mb-4">O Nosso Catálogo</h3>
+
+    @if (produtos == null) {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">A carregar...</span>
+            </div>
+        </div>
+    }
+    else if (!produtos.Any()) {
+        <div class="alert alert-info">Não foram encontrados produtos disponíveis.</div>
+    }
+    else {
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var produto in produtos) {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@produto.Titulo</h5>
+                            <p class="card-text text-muted">Preço: @produto.PrecoFinal.ToString("C")</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <button class="btn btn-outline-primary w-100">Adicionar ao Carrinho</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<ProdutoDTO>? produtos;
+
+    protected override async Task OnInitializedAsync() {
+        produtos = await ProdutoService.GetProdutosAtivos();
+    }
+}
