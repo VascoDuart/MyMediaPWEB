@@ -34,7 +34,10 @@
                 <div class="col">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">@produto.Titulo</h5>
+                            <h5 class="card-title">
+                                <a href="detalhes/@produto.ProdutoId" class="text-decoration-none text-dark">@produto.Titulo</a>
+                            </h5>
+                            <span class="badge bg-info text-dark mb-2">@produto.CategoriaNome</span>
                             <p class="card-text text-muted">Preço: @produto.PrecoFinal.ToString("C")</p>
                         </div>
                         <div class="card-footer bg-white border-top-0">
