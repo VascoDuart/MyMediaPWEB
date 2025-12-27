@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.data", "MyMedia.dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.API", "MyMedia.API\MyMedia.API.csproj", "{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyMedia.Gestao", "MyMedia.Gestao\MyMedia.Gestao.csproj", "{34375CFA-7A8A-40F8-AD23-1A72CE49CAD1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C0EBFC1-4314-41EF-A8A4-8EF532D45952}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34375CFA-7A8A-40F8-AD23-1A72CE49CAD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34375CFA-7A8A-40F8-AD23-1A72CE49CAD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34375CFA-7A8A-40F8-AD23-1A72CE49CAD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34375CFA-7A8A-40F8-AD23-1A72CE49CAD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

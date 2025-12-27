@@ -1,0 +1,57 @@
+﻿@page "/gestao/utilizadores"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using MyMedia.Data.Models
+@inject UserManager<ApplicationUser> UserManager
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
+
+<h3>Gestão de Utilizadores (Clientes/Fornecedores)</h3>
+
+@if (utilizadores == null) {
+    <p>A carregar utilizadores...</p>
+}
+else {
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Nome</th>
+                <th>Estado</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in utilizadores) {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.UserName</td>
+                    <td>
+                        <span class="badge @(user.EmailConfirmed ? "bg-success" : "bg-warning")">
+                            @(user.EmailConfirmed ? "Ativo" : "Pendente")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm @(user.EmailConfirmed ? "btn-danger" : "btn-primary")"
+                                @onclick="() => AlternarEstado(user)">
+                            @(user.EmailConfirmed ? "Inativar" : "Ativar")
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ApplicationUser> utilizadores;
+
+    protected override async Task OnInitializedAsync() {
+        utilizadores = await UserManager.Users.ToListAsync();
+    }
+
+    private async Task AlternarEstado(ApplicationUser user) {
+        user.EmailConfirmed = !user.EmailConfirmed;
+        await UserManager.UpdateAsync(user);
+    }
+}

@@ -1,0 +1,82 @@
+﻿@page "/gestao/pendentes"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using MyMedia.Data
+@using MyMedia.Data.Models
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
+
+<h3>Validar Produtos (Pendentes)</h3>
+
+@if (produtos == null) {
+    <p><em>A carregar produtos pendentes...</em></p>
+}
+else if (!produtos.Any()) {
+    <p>Não existem produtos a aguardar validação.</p>
+}
+else {
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Fornecedor</th>
+                <th>Preço Base</th>
+                <th>% Lucro</th>
+                <th>Preço Final</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var produto in produtos) {
+                <tr>
+                    <td>@produto.Titulo</td>
+                    <td>@produto.FornecedorId</td>
+                    <td>@produto.PrecoBase.ToString("C")</td>
+                    <td>
+                        <input type="number" @bind="percentagens[produto.ProdutoId]" @bind:event="oninput" class="form-control" style="width: 80px;" />
+                    </td>
+                    <td>
+                        @((produto.PrecoBase * (1 + (percentagens.ContainsKey(produto.ProdutoId) ? percentagens[produto.ProdutoId] : 0) / 100)).ToString("C"))
+                    </td>
+                    <td>
+                        <button class="btn btn-success" @onclick="() => AprovarProduto(produto)">Aprovar e Ativar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<MyMedia.Data.Models.Produto> produtos;
+    private Dictionary<int, decimal> percentagens = new();
+
+    protected override async Task OnInitializedAsync() {
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        produtos = await context.Set<MyMedia.Data.Models.Produto>()
+            .Where(p => p.Estado == MyMedia.Data.Models.EstadoProduto.Pendente)
+            .ToListAsync();
+
+        if (produtos != null) {
+            foreach (var p in produtos)
+            {
+                percentagens[p.ProdutoId] = 10;
+            }
+        }
+    }
+
+    private async Task AprovarProduto(MyMedia.Data.Models.Produto p) {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var produtoDb = await context.Set<MyMedia.Data.Models.Produto>().FindAsync(p.ProdutoId);
+
+        if (produtoDb != null) {
+            decimal perc = percentagens[p.ProdutoId];
+            produtoDb.PrecoFinal = produtoDb.PrecoBase * (1 + perc / 100);
+            produtoDb.Estado = MyMedia.Data.Models.EstadoProduto.Ativo;
+
+            await context.SaveChangesAsync();
+            produtos.Remove(p);
+        }
+    }
+}
