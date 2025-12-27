@@ -1,4 +1,6 @@
 ﻿@page "/catalogo"
+@using Microsoft.AspNetCore.Components.Web
+@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
 @using RCLAPI.Services
 @using RCLAPI.DTOs
 @inject IProdutoService ProdutoService
@@ -7,6 +9,14 @@
 
 <div class="container mt-4">
     <h3 class="mb-4">O Nosso Catálogo</h3>
+
+    <div class="btn-group mb-4" role="group">
+        <button type="button" class="btn btn-outline-secondary @(filtro == "Todos" ? "active" : "")" @onclick='() => Filtrar("Todos")'>Todos</button>
+        <button type="button" class="btn btn-outline-secondary @(filtro == "Filmes" ? "active" : "")" @onclick='() => Filtrar("Filmes")'>Filmes</button>
+        <button type="button" class="btn btn-outline-secondary @(filtro == "Música" ? "active" : "")" @onclick='() => Filtrar("Música")'>Música</button>
+        <button type="button" class="btn btn-outline-secondary @(filtro == "Acessórios" ? "active" : "")" @onclick='() => Filtrar("Acessórios")'>Acessórios</button>
+        <button type="button" class="btn btn-outline-secondary @(filtro == "Letras" ? "active" : "")" @onclick='() => Filtrar("Letras")'>Letras</button>
+    </div>
 
     @if (produtos == null) {
         <div class="d-flex justify-content-center">
@@ -20,7 +30,7 @@
     }
     else {
         <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var produto in produtos) {
+            @foreach (var produto in produtosFiltrados ?? Array.Empty<ProdutoDTO>()) {
                 <div class="col">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
@@ -39,8 +49,22 @@
 
 @code {
     private IEnumerable<ProdutoDTO>? produtos;
+    private IEnumerable<ProdutoDTO>? produtosFiltrados;
+    private string filtro = "Todos";
 
     protected override async Task OnInitializedAsync() {
         produtos = await ProdutoService.GetProdutosAtivos();
+        produtosFiltrados = produtos;
+    }
+
+    private void Filtrar(string categoria) {
+        filtro = categoria;
+        if (categoria == "Todos") {
+            produtosFiltrados = produtos;
+        }
+        else {
+            produtosFiltrados = produtos?.Where(p => p.CategoriaNome.Equals(categoria, StringComparison.OrdinalIgnoreCase));
+        }
+        StateHasChanged();
     }
 }
