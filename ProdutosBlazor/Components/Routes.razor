@@ -1,16 +1,28 @@
 ﻿@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization 
 @using RCLProdutos.Pages
+@using RCLComum.Pages 
 
 <Router AppAssembly="@typeof(Program).Assembly"
-        AdditionalAssemblies="new[] { typeof(RCLProdutos.Pages.Catalogo).Assembly }">
+        AdditionalAssemblies="new[] {
+                    typeof(RCLProdutos.Pages.Catalogo).Assembly,
+                    typeof(RCLComum.Pages.Login).Assembly 
+                }">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <p role="alert">Não tens permissão para aceder a esta página. Por favor, faz login.</p>
+            </NotAuthorized>
+            <Authorizing>
+                <p>A validar autenticação...</p>
+            </Authorizing>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound>
         <PageTitle>Não Encontrado</PageTitle>
         <LayoutView Layout="@typeof(Layout.MainLayout)">
-            <p role="alert">A página não foi encontrada. Rota atual: /catalogo</p>
+            <p role="alert">A página não foi encontrada.</p>
         </LayoutView>
     </NotFound>
 </Router>

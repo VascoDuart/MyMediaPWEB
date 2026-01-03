@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MyMedia.data\MyMedia.data.csproj" />
+    <ProjectReference Include="..\RCLComum\RCLComum.csproj" />
   </ItemGroup>
 
 </Project>
