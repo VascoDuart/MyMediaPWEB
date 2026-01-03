@@ -1,0 +1,50 @@
+﻿@page "/produtos/validar"
+@using MyMedia.Data
+@using MyMedia.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject MyMedia.Data.ApplicationDbContext DbContext
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@rendermode InteractiveServer
+
+<h3>Validar Novos Produtos</h3>
+
+@foreach (var prod in produtosPendentes)
+{
+    <div class="card mb-3 p-3">
+        <h5>@prod.Titulo</h5>
+        <p>Fornecedor ID: @prod.FornecedorId | Preço Base: @prod.PrecoBase.ToString("C")</p>
+
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label>Percentagem de Lucro (%):</label>
+                <input type="number" class="form-control" @bind="percentagens[prod.ProdutoId]" />
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" @onclick="() => Validar(prod)">Ativar Produto</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Produto> produtosPendentes = new();
+    private Dictionary<int, decimal> percentagens = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        produtosPendentes = await DbContext.Produtos
+            .Where(p => p.Estado == EstadoProduto.Pendente).ToListAsync();
+
+        foreach (var p in produtosPendentes) percentagens[p.ProdutoId] = 10; // 10% defeito
+    }
+
+    private async Task Validar(Produto p)
+    {
+        decimal lucro = percentagens[p.ProdutoId] / 100;
+        p.PrecoFinal = p.PrecoBase * (1 + lucro);
+        p.Estado = EstadoProduto.Ativo;
+
+        await DbContext.SaveChangesAsync();
+        produtosPendentes.Remove(p);
+    }
+}

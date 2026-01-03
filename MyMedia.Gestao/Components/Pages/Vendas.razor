@@ -1,0 +1,76 @@
+﻿@page "/vendas"
+@using MyMedia.Data
+@using MyMedia.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject MyMedia.Data.ApplicationDbContext DbContext
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@rendermode InteractiveServer
+
+<h3>Gestão de Vendas (MyMEDIA)</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var v in vendas)
+        {
+            <tr>
+                <td>@v.EncomendaId</td>
+                <td>@v.Cliente?.NomeCompleto</td>
+                <td>@v.Total.ToString("C")</td>
+                <td>
+                    <span class="badge @(GetBadgeClass(v.EstadoEncomenda))">
+                        @v.EstadoEncomenda
+                    </span>
+                </td>
+                <td>
+                    @* Lógica de botões baseada no estadoEncomenda atual *@
+                    @if (v.EstadoEncomenda == "Pendente")
+                    {
+                        <button class="btn btn-primary btn-sm" @onclick='() => AtualizarStatus(v, "Pago")'>
+                            Confirmar Pagamento
+                        </button>
+                    }
+                    else if (v.EstadoEncomenda == "Pago")
+                    {
+                        <button class="btn btn-success btn-sm" @onclick='() => AtualizarStatus(v, "Expedido")'>
+                            Expedir
+                        </button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Encomenda> vendas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Carrega as encomendas incluindo os dados do cliente para mostrar o nome
+        vendas = await DbContext.Encomendas.Include(e => e.Cliente).ToListAsync();
+    }
+
+    private async Task AtualizarStatus(Encomenda e, string novoEstado)
+    {
+        e.EstadoEncomenda = novoEstado; // Alterado de 'Estado' para 'EstadoEncomenda'
+        await DbContext.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private string GetBadgeClass(string estado) => estado switch
+    {
+        "Pendente" => "bg-warning text-dark",
+        "Pago" => "bg-info",
+        "Expedido" => "bg-success",
+        _ => "bg-secondary"
+    };
+}
