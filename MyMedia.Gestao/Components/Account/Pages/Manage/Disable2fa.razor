@@ -3,8 +3,8 @@
 @using Microsoft.AspNetCore.Identity
 @using MyMedia.Data
 
-@inject UserManager<IdentityUser> UserManager
-@inject IdentityUserAccessor UserAccessor
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<Disable2fa> Logger
 
@@ -31,7 +31,7 @@
 </div>
 
 @code {
-    private IdentityUser user = default!;
+    private ApplicationUser user = default!;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;

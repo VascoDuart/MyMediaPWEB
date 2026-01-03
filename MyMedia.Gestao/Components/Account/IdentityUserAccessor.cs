@@ -3,7 +3,7 @@ using MyMedia.Data.Models;
 
 namespace MyMedia.Gestao.Components.Account;
 
-internal sealed class IdentityUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager) {
+internal sealed class ApplicationUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager) {
     public async Task<ApplicationUser> GetRequiredUserAsync(HttpContext context) {
         var user = await userManager.GetUserAsync(context.User);
 

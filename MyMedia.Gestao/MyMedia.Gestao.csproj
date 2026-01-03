@@ -22,4 +22,8 @@
     <ProjectReference Include="..\MyMedia.data\MyMedia.data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
 </Project>

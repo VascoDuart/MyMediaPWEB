@@ -24,7 +24,7 @@
             <tr>
                 <td>@v.EncomendaId</td>
                 <td>@v.Cliente?.NomeCompleto</td>
-                <td>@v.Total.ToString("C")</td>
+                <td>@v.ValorTotal.ToString("C")</td>
                 <td>
                     <span class="badge @(GetBadgeClass(v.EstadoEncomenda))">
                         @v.EstadoEncomenda

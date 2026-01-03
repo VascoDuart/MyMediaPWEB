@@ -11,7 +11,6 @@ namespace MyMedia.Data.Models {
         public decimal ValorTotal { get; set; }
 
         public string EstadoEncomenda { get; set; }
-        public decimal Total { get; set; }
         public string ClienteId { get; set; }
         public ApplicationUser Cliente { get; set; }
 
