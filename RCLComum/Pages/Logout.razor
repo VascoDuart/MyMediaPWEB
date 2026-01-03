@@ -1,5 +1,19 @@
-﻿<h3>Component1</h3>
+﻿@page "/logout"
+@using RCLComum.Services
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+
+<div class="container mt-5 text-center">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">A sair...</span>
+    </div>
+    <p class="mt-2">A terminar a sua sessão, por favor aguarde...</p>
+</div>
 
 @code {
-
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.LogoutAsync();
+        NavManager.NavigateTo("/", forceLoad: true); 
+    }
 }

@@ -14,19 +14,27 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <AuthorizeView Context="authContext">
-                <Authorized>
-                    <span class="nav-link text-light">Olá, @authContext.User.Identity?.Name</span>
-                    <NavLink class="nav-link" href="logout">Sair</NavLink>
-                </Authorized>
-                <NotAuthorized>
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi bi-person-fill" aria-hidden="true"></span> Entrar
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logout">
+                        <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sair
                     </NavLink>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Entrar
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="register">
+                        <span class="bi bi-person-plus-nav-menu" aria-hidden="true"></span> Registar
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="catalogo">

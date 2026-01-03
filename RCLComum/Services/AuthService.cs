@@ -16,6 +16,17 @@ namespace RCLComum.Services {
             _authStateProvider = authStateProvider;
         }
 
+        public async Task<LoginResult> RegisterAsync(RegisterDTO registerDto) {
+            var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerDto);
+
+            if (response.IsSuccessStatusCode) {
+                return new LoginResult { Sucedido = true };
+            }
+
+            var error = await response.Content.ReadAsStringAsync();
+            return new LoginResult { Sucedido = false, Erro = "Erro no registo. Verifique os dados." };
+        }
+
         public async Task<LoginResult> LoginAsync(LoginDTO loginDto) {
             var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginDto);
 
