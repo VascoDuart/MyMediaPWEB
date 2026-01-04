@@ -57,17 +57,17 @@ namespace MyMedia.API.Controllers {
             if (user == null)
                 return Unauthorized(new { Message = "Credenciais inválidas." });
 
-            if (!user.IsAtivo)
-                return Unauthorized(new { Message = "Conta pendente de ativação." });
-
             var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
 
             if (!result.Succeeded)
                 return Unauthorized(new { Message = "Credenciais inválidas." });
 
+            if (!user.IsAtivo)
+                return Unauthorized(new { Message = "A sua conta ainda não foi aprovada pelo administrador." });
+
             var token = await _tokenService.CreateToken(user);
 
-            return Ok(new LoginResult {
+            return Ok(new LoginResult{
                 Token = token,
                 Nome = user.NomeCompleto,
                 Email = user.Email,

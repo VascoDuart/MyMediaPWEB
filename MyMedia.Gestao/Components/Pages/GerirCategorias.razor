@@ -1,0 +1,72 @@
+﻿@page "/gestao/categorias"
+@using MyMedia.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject MyMedia.Data.ApplicationDbContext DbContext
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@rendermode InteractiveServer
+
+<h3>Gestão de Categorias</h3>
+
+<div class="mb-3">
+    <input @bind="novaCategoriaNome" placeholder="Nome da nova categoria" class="form-control d-inline-block w-auto" />
+    <button class="btn btn-success" @onclick="Adicionar">Adicionar</button>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var cat in categorias) {
+            <tr>
+                <td>@cat.Nome</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" @onclick="() => Apagar(cat)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Categoria> categorias = new();
+    private string novaCategoriaNome = "";
+
+    protected override async Task OnInitializedAsync() {
+        categorias = await DbContext.Categorias.ToListAsync();
+    }
+
+    private async Task Adicionar() {
+        if (!string.IsNullOrWhiteSpace(novaCategoriaNome)) {
+            try {
+                var novaCat = new Categoria {
+                    Nome = novaCategoriaNome,
+                    Descricao = "" 
+                };
+
+                DbContext.Categorias.Add(novaCat);
+                await DbContext.SaveChangesAsync();
+
+                novaCategoriaNome = "";
+                categorias = await DbContext.Categorias.ToListAsync();
+                StateHasChanged();
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Erro ao adicionar: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task Apagar(Categoria cat) {
+        var temProdutos = await DbContext.Produtos.AnyAsync(p => p.CategoriaId == cat.CategoriaId);
+        if (temProdutos) {
+            return;
+        }
+        DbContext.Categorias.Remove(cat);
+        await DbContext.SaveChangesAsync();
+        categorias.Remove(cat);
+    }
+}

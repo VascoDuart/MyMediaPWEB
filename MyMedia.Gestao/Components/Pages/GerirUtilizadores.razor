@@ -4,6 +4,7 @@
 @using Microsoft.EntityFrameworkCore
 @using MyMedia.Data.Models
 @inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor httpContextAccessor
 @attribute [Authorize(Roles = "Administrador, Funcionário")]
 
 <h3>Gestão de Utilizadores (Clientes/Fornecedores)</h3>
@@ -22,26 +23,27 @@ else {
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in utilizadores) {
+            @foreach (var user in utilizadores)
+            {
                 <tr>
                     <td>@user.Email</td>
-                    <td>@user.UserName</td>
+                    <td>@user.NomeCompleto</td>
                     <td>
-                        <span class="badge @(user.EmailConfirmed ? "bg-success" : "bg-warning")">
-                            @(user.EmailConfirmed ? "Ativo" : "Pendente")
+                        <span class="badge @(user.IsAtivo ? "bg-success" : "bg-warning")">
+                            @(user.IsAtivo ? "Ativo" : "Pendente")
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm @(user.EmailConfirmed ? "btn-danger" : "btn-primary")"
+                        <button class="btn btn-sm @(user.IsAtivo ? "btn-danger" : "btn-primary")"
                                 @onclick="() => AlternarEstado(user)">
-                            @(user.EmailConfirmed ? "Inativar" : "Ativar")
+                            @(user.IsAtivo ? "Inativar" : "Ativar")
                         </button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-}
+   }
 
 @code {
     private List<ApplicationUser> utilizadores;
@@ -51,7 +53,10 @@ else {
     }
 
     private async Task AlternarEstado(ApplicationUser user) {
-        user.EmailConfirmed = !user.EmailConfirmed;
+        var adminLogado = await UserManager.GetUserAsync(httpContextAccessor.HttpContext.User);
+        if (user.Id == adminLogado?.Id) return;
+
+        user.IsAtivo = !user.IsAtivo;
         await UserManager.UpdateAsync(user);
     }
 }
