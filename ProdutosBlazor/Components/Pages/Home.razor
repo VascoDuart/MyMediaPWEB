@@ -1,7 +1,65 @@
 ﻿@page "/"
+@using RCLComum.Models
+@using RCLAPI.Services
+@inject IProdutoService ProdutoService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - MyMedia</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h1 class="display-4">Bem-vindo à MyMedia</h1>
+        <p class="lead">A sua loja favorita de filmes, discos e acessórios.</p>
+    </div>
 
-Welcome to your new app.
+    @if (produtoDestaque == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">A carregar destaque...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg border-primary">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0">⭐ Produto em Destaque</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 text-center">
+                                <i class="bi bi-star-fill text-warning" style="font-size: 5rem;"></i>
+                            </div>
+                            <div class="col-md-8">
+                                <h2 class="card-title text-primary">@produtoDestaque.Titulo</h2>
+                                <h6 class="card-subtitle mb-3 text-muted">Categoria: @produtoDestaque.CategoriaNome</h6>
+                                <p class="card-text">@produtoDestaque.Descricao</p>
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <span class="h3 text-success mb-0">@produtoDestaque.PrecoFinal.ToString("C2")</span>
+                                    <a href="/detalhes/@produtoDestaque.ProdutoId" class="btn btn-outline-primary btn-lg">
+                                        Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted text-center small">
+                        Fornecido por: @produtoDestaque.FornecedorNome
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private ProdutoDTO? produtoDestaque;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Chama o novo método implementado no serviço para obter um produto aleatório
+        produtoDestaque = await ProdutoService.GetProdutoRandom();
+    }
+}

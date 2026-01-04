@@ -33,5 +33,17 @@ namespace RCLAPI.Services {
         public async Task<ProdutoDTO?> GetProdutoById(int id) {
             return await _http.GetFromJsonAsync<ProdutoDTO>($"api/Produtos/{id}");
         }
+
+        public async Task<ProdutoDTO?> GetProdutoRandom()
+        {
+            try
+            {
+                return await _http.GetFromJsonAsync<ProdutoDTO>("api/Produtos/random");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 }

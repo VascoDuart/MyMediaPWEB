@@ -123,5 +123,32 @@ namespace MyMedia.API.Controllers {
 
             return NoContent();
         }
+
+        [HttpGet("random")]
+        public async Task<ActionResult<ProdutoDTO>> GetRandomProduto()
+        {
+            var count = await _context.Produtos.Where(p => p.Estado == EstadoProduto.Ativo).CountAsync();
+            if (count == 0) return NotFound();
+
+            var randomIndex = new Random().Next(0, count);
+            var p = await _context.Produtos
+                .Include(p => p.Categoria)
+                .Include(p => p.Fornecedor)
+                .Where(p => p.Estado == EstadoProduto.Ativo)
+                .Skip(randomIndex)
+                .FirstOrDefaultAsync();
+
+            return new ProdutoDTO
+            {
+                ProdutoId = p.ProdutoId,
+                Titulo = p.Titulo,
+                Descricao = p.Descricao,
+                PrecoFinal = p.PrecoFinal,
+                Stock = p.Stock,
+                CategoriaNome = p.Categoria.Nome,
+                FornecedorNome = p.Fornecedor.NomeCompleto,
+                Estado = p.Estado.ToString()
+            };
+        }
     }
 }
