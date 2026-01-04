@@ -42,7 +42,7 @@
                             <span class="badge bg-info text-dark mb-2">@produto.CategoriaNome</span>
                             <p class="card-text text-muted">Preço: @produto.PrecoFinal.ToString("C")</p>
                         </div>
-                        <button class="btn btn-success w-100" @onclick="() => CarrinhoService.Adicionar(produto)">
+                        <button class="btn btn-success w-100" @onclick="() => AdicionarAoCarrinho(produto)">
                             <i class="bi bi-cart-plus"></i> Adicionar ao Carrinho
                         </button>
                     </div>
@@ -60,6 +60,11 @@
     protected override async Task OnInitializedAsync() {
         produtos = await ProdutoService.GetProdutosAtivos();
         produtosFiltrados = produtos;
+    }
+
+    private void AdicionarAoCarrinho(ProdutoDTO produto) {
+        CarrinhoService.Adicionar(produto);
+        StateHasChanged();
     }
 
     private void Filtrar(string categoria) {

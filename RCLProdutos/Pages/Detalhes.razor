@@ -3,6 +3,8 @@
 @rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
 @using RCLComum.Models
 @using RCLAPI.Services
+@using RCLComum.Services
+@inject CarrinhoService CarrinhoService
 @inject IProdutoService ProdutoService
 @inject NavigationManager Nav
 
@@ -38,8 +40,8 @@
                     }
                 </div>
 
-                <button class="btn btn-primary btn-lg w-100 mt-4" disabled="@(produto.Stock <= 0)">
-                    Adicionar ao Carrinho
+                <button class="btn btn-success btn-lg w-100 mb-3" @onclick="Adicionar">
+                    <i class="bi bi-cart-plus"></i> Adicionar ao Carrinho
                 </button>
             </div>
         </div>
@@ -52,5 +54,11 @@
 
     protected override async Task OnInitializedAsync() {
         produto = await ProdutoService.GetProdutoById(Id);
+    }
+
+    private void Adicionar() {
+        if (produto != null) {
+            CarrinhoService.Adicionar(produto);
+        }
     }
 }
