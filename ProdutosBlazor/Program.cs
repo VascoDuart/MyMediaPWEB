@@ -17,6 +17,8 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddScoped<IProdutoService, RCLAPI.Services.ProdutoService>();
 
+builder.Services.AddScoped<CarrinhoService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 

@@ -1,0 +1,38 @@
+﻿@page "/carrinho"
+@using RCLComum.Services
+@inject CarrinhoService Carro
+@inject NavigationManager NavManager
+
+<div class="container mt-4">
+    <h2><i class="bi bi-cart3"></i> O Meu Carrinho</h2>
+
+    @if (!Carro.Itens.Any()) {
+        <div class="alert alert-info">O seu carrinho está vazio.</div>
+    }
+    else {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Qtd</th>
+                    <th>Preço</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Carro.Itens) {
+                    <tr>
+                        <td>@item.Titulo</td>
+                        <td>@item.Quantidade</td>
+                        <td>@item.Preco.ToString("C2")</td>
+                        <td>@item.Total.ToString("C2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-end">
+            <h4>Total: @Carro.ValorTotal.ToString("C2")</h4>
+            <button class="btn btn-primary btn-lg">Finalizar Encomenda</button>
+        </div>
+    }
+</div>

@@ -3,7 +3,9 @@
 @rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
 @using RCLAPI.Services
 @using RCLComum.Models
+@using RCLComum.Services
 @inject IProdutoService ProdutoService
+@inject CarrinhoService CarrinhoService
 
 <PageTitle>Catálogo de Multimédia</PageTitle>
 
@@ -40,9 +42,9 @@
                             <span class="badge bg-info text-dark mb-2">@produto.CategoriaNome</span>
                             <p class="card-text text-muted">Preço: @produto.PrecoFinal.ToString("C")</p>
                         </div>
-                        <div class="card-footer bg-white border-top-0">
-                            <button class="btn btn-outline-primary w-100">Adicionar ao Carrinho</button>
-                        </div>
+                        <button class="btn btn-success w-100" @onclick="() => CarrinhoService.Adicionar(produto)">
+                            <i class="bi bi-cart-plus"></i> Adicionar ao Carrinho
+                        </button>
                     </div>
                 </div>
             }

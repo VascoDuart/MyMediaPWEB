@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using RCLComum.Services
+@inject CarrinhoService CarrinhoService
+@implements IDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">ProdutosBlazor</a>
     </div>
@@ -17,16 +21,13 @@
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3 mb-2">
-                    <div class="nav-link">
-                        <span class="bi bi-person-check-fill " aria-hidden="true"></span>
-                        <span class="d-inline-block">
-                            <span>Perfil: @(context.User.FindFirst("role")?.Value ?? "Cliente")</span>
-                        </span>
+                    <div class="nav-link text-white-50">
+                        <span class="bi bi-person-check-fill" aria-hidden="true"></span>
+                        <span>Perfil: @(context.User.FindFirst("role")?.Value ?? "Cliente")</span>
                     </div>
                 </div>
 
-                @if (context.User.Claims.Any(c => c.Type == "role" && c.Value == "Fornecedor"))
-                {
+                @if (context.User.Claims.Any(c => c.Type == "role" && c.Value == "Fornecedor")) {
                     <div class="nav-item px-3">
                         <NavLink class="nav-link" href="produtos/novo">
                             <span class="bi bi-plus-circle-fill" aria-hidden="true"></span> Vender Produto
@@ -38,6 +39,16 @@
                         </NavLink>
                     </div>
                 }
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="carrinho">
+                        <span class="bi bi-cart-fill" aria-hidden="true"></span> Carrinho
+                        @if (CarrinhoService.Itens.Any())
+                        {
+                            <span class="badge bg-danger ms-2">@CarrinhoService.Itens.Sum(i => i.Quantidade)</span>
+                        }
+                    </NavLink>
+                </div>
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="logout">
@@ -66,3 +77,13 @@
         </div>
     </nav>
 </div>
+
+@code {
+    protected override void OnInitialized() {
+        CarrinhoService.OnCarrinhoAlterado += StateHasChanged;
+    }
+
+    public void Dispose() {
+        CarrinhoService.OnCarrinhoAlterado -= StateHasChanged;
+    }
+}
