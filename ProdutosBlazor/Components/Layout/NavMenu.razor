@@ -20,10 +20,25 @@
                     <div class="nav-link">
                         <span class="bi bi-person-check-fill " aria-hidden="true"></span>
                         <span class="d-inline-block">
-                            <span >Perfil: @(context.User.FindFirst("role")?.Value ?? "Cliente")</span>
+                            <span>Perfil: @(context.User.FindFirst("role")?.Value ?? "Cliente")</span>
                         </span>
                     </div>
                 </div>
+
+                @if (context.User.Claims.Any(c => c.Type == "role" && c.Value == "Fornecedor"))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="produtos/novo">
+                            <span class="bi bi-plus-circle-fill" aria-hidden="true"></span> Vender Produto
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="fornecedor/meus-produtos">
+                            <span class="bi bi-box-seam-fill" aria-hidden="true"></span> Meus Produtos
+                        </NavLink>
+                    </div>
+                }
+
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="logout">
                         <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sair
@@ -51,4 +66,3 @@
         </div>
     </nav>
 </div>
-

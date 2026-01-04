@@ -25,7 +25,7 @@ namespace RCLComum.Services {
                 _httpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("bearer", token);
 
-                var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+                var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "unique_name", "role");
                 return new AuthenticationState(new ClaimsPrincipal(identity));
             }
             catch (InvalidOperationException) {
@@ -34,7 +34,7 @@ namespace RCLComum.Services {
         }
 
         public void NotifyUserAuthentication(string token) {
-            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "unique_name", "role");
             var user = new ClaimsPrincipal(identity);
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }

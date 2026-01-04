@@ -16,6 +16,15 @@ namespace RCLComum.Services {
             _authStateProvider = authStateProvider;
         }
 
+        public async Task<string?> GetToken() {
+            try {
+                return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+            }
+            catch {
+                return null;
+            }
+        }
+
         public async Task<LoginResult> RegisterAsync(RegisterDTO registerDto) {
             var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerDto);
 

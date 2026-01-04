@@ -1,0 +1,67 @@
+﻿@page "/produtos/novo"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using RCLComum.Models
+@using RCLAPI.Services
+@inject IProdutoService ProdutoService
+@inject NavigationManager NavManager
+@attribute [Authorize(Roles = "Fornecedor")]
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Submeter Novo Produto</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="novoProd" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">Título</label>
+                    <InputText @bind-Value="novoProd.Titulo" class="form-control" placeholder="Ex: Vinil Dark Side of the Moon" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">Descrição</label>
+                    <InputTextArea @bind-Value="novoProd.Descricao" class="form-control" rows="3" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Preço Base (€)</label>
+                        <InputNumber @bind-Value="novoProd.PrecoBase" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Stock Inicial</label>
+                        <InputNumber @bind-Value="novoProd.Stock" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">Categoria (ID)</label>
+                    <InputNumber @bind-Value="novoProd.CategoriaId" class="form-control" />
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" @onclick='() => NavManager.NavigateTo("/catalogo")'>Cancelar</button>
+                    <button type="submit" class="btn btn-success">Submeter para Aprovação</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ProdutoCreateDTO novoProd = new();
+
+    private async Task HandleSubmit() {
+        var sucesso = await ProdutoService.CriarProdutoAsync(novoProd);
+        if (sucesso) {
+            NavManager.NavigateTo("/catalogo");
+        }
+        else {
+            Console.WriteLine("Erro ao submeter produto.");
+        }
+    }
+}

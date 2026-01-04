@@ -18,6 +18,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IProdutoService, RCLAPI.Services.ProdutoService>();
 
 builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
