@@ -1,0 +1,64 @@
+﻿@page "/historico"
+@using RCLAPI.Services
+@using RCLComum.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Cliente")]
+@inject IEncomendaService EncomendaService
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary"><i class="bi bi-list-ul"></i> O Meu Histórico de Encomendas</h2>
+
+    @if (encomendas == null) {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">A carregar o seu histórico...</p>
+        </div>
+    }
+    else if (!encomendas.Any()) {
+        <div class="alert alert-info shadow-sm">
+            <i class="bi bi-info-circle"></i> Ainda não realizou nenhuma encomenda.
+            <a href="catalogo" class="alert-link">Visite o nosso catálogo!</a>
+        </div>
+    }
+    else {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID #</th>
+                        <th>Data</th>
+                        <th class="text-center">Artigos</th>
+                        <th>Valor Total</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in encomendas) {
+                        <tr>
+                            <td><strong>@e.EncomendaId</strong></td>
+                            <td>@e.DataEncomenda.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-center">@e.QtdItens</td>
+                            <td class="fw-bold">@e.ValorTotal.ToString("C2")</td>
+                            <td>
+                                @if (e.EstadoEncomenda == "Pendente") {
+                                    <span class="badge bg-warning text-dark">Pendente</span>
+                                }
+                                else {
+                                    <span class="badge bg-success">@e.EstadoEncomenda</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<EncomendaListaDTO>? encomendas;
+
+    protected override async Task OnInitializedAsync() {
+        encomendas = await EncomendaService.GetEncomendasClienteAsync();
+    }
+}

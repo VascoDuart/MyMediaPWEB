@@ -19,11 +19,14 @@ namespace RCLAPI.Services {
             _authService = authService;
         }
 
-        public async Task<bool> FinalizarEncomendaAsync(EncomendaCreateDTO encomenda) {
+        public async Task<bool> FinalizarEncomendaAsync(EncomendaCreateDTO dto) {
             var token = await _authService.GetToken();
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _http.PostAsJsonAsync("api/Encomendas", encomenda);
+            _http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.PostAsJsonAsync("api/encomendas", dto);
+
             return response.IsSuccessStatusCode;
         }
 

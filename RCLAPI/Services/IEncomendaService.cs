@@ -8,5 +8,7 @@ using RCLComum.Models;
 namespace RCLAPI.Services {
     public interface IEncomendaService {
         Task<bool> FinalizarEncomendaAsync(EncomendaCreateDTO encomenda);
+
+        Task<List<EncomendaListaDTO>> GetEncomendasClienteAsync();
     }
 }

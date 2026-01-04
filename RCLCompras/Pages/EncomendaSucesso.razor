@@ -1,0 +1,22 @@
+﻿@page "/encomenda-sucesso"
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Nav
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm p-5 border-0 bg-light">
+        <div class="mb-4">
+            <i class="bi bi-bag-check-fill text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="display-6 fw-bold">Encomenda Confirmada!</h2>
+        <p class="lead text-muted">O seu pedido foi processado e o stock foi atualizado com sucesso.</p>
+
+        <div class="mt-4 d-flex justify-content-center gap-3">
+            <button class="btn btn-primary btn-lg px-4" @onclick='() => Nav.NavigateTo("catalogo")'>
+                <i class="bi bi-shop"></i> Continuar a Comprar
+            </button>
+            <button class="btn btn-outline-dark btn-lg px-4" @onclick='() => Nav.NavigateTo("historico")'>
+                <i class="bi bi-clock-history"></i> Ver Histórico
+            </button>
+        </div>
+    </div>
+</div>
