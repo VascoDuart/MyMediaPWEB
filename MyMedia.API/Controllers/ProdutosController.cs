@@ -150,5 +150,27 @@ namespace MyMedia.API.Controllers {
                 Estado = p.Estado.ToString()
             };
         }
+
+        [HttpGet("meus-produtos")]
+        [Authorize(Roles = "Fornecedor")]
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetMeusProdutos()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return await _context.Produtos
+                .Include(p => p.Categoria)
+                .Where(p => p.FornecedorId == userId)
+                .Select(p => new ProdutoDTO
+                {
+                    ProdutoId = p.ProdutoId,
+                    Titulo = p.Titulo,
+                    Descricao = p.Descricao,
+                    PrecoFinal = p.PrecoFinal,
+                    Stock = p.Stock,
+                    CategoriaNome = p.Categoria.Nome,
+                    // Conversão crucial do Enum para String
+                    Estado = p.Estado.ToString()
+                }).ToListAsync();
+        }
     }
 }

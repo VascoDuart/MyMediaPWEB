@@ -45,5 +45,37 @@ namespace RCLAPI.Services {
                 return null;
             }
         }
+
+
+        // Método auxiliar para garantir que o token é enviado
+        private async Task AdicionarToken()
+        {
+            var token = await _authService.GetToken();
+            if (!string.IsNullOrEmpty(token))
+            {
+                _http.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        public async Task<IEnumerable<ProdutoDTO>> GetMeusProdutosAsync()
+        {
+            await AdicionarToken();
+            var resultado = await _http.GetFromJsonAsync<List<ProdutoDTO>>("api/Produtos/meus-produtos");
+            return resultado ?? new List<ProdutoDTO>();
+        }
+
+        public async Task<bool> AtualizarProdutoAsync(int id, ProdutoCreateDTO produtoEditado)
+        {
+            await AdicionarToken();
+            var response = await _http.PutAsJsonAsync($"api/Produtos/{id}", produtoEditado);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> EliminarProdutoAsync(int id)
+        {
+            await AdicionarToken();
+            var response = await _http.DeleteAsync($"api/Produtos/{id}");
+            return response.IsSuccessStatusCode;
+        }
     }
 }

@@ -6,5 +6,8 @@ namespace RCLAPI.Services {
         Task<IEnumerable<ProdutoDTO>> GetProdutosAtivos();
         Task<ProdutoDTO?> GetProdutoById(int id);
         Task<ProdutoDTO?> GetProdutoRandom();
+        Task<IEnumerable<ProdutoDTO>> GetMeusProdutosAsync();
+        Task<bool> AtualizarProdutoAsync(int id, ProdutoCreateDTO produtoEditado);
+        Task<bool> EliminarProdutoAsync(int id);
     }
 }
