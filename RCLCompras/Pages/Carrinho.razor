@@ -1,0 +1,102 @@
+﻿@page "/carrinho"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Authorization
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using RCLComum.Services
+@using RCLComum.Models
+@using RCLAPI.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Cliente")]
+@inject CarrinhoService Carro
+@inject IEncomendaService EncomendaService
+@inject NavigationManager NavManager
+
+<div class="container mt-4">
+    <h2><i class="bi bi-cart3"></i> O Meu Carrinho</h2>
+
+    @if (!Carro.Itens.Any()) {
+        <div class="alert alert-info shadow-sm">
+            <i class="bi bi-info-circle"></i> O seu carrinho está vazio.
+            <a href="catalogo" class="alert-link">Voltar ao catálogo.</a>
+        </div>
+    }
+    else {
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Produto</th>
+                    <th class="text-center">Qtd</th>
+                    <th>Preço</th>
+                    <th>Total</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Carro.Itens) {
+                    <tr>
+                        <td>@item.Titulo</td>
+                        <td class="text-center">@item.Quantidade</td>
+                        <td>@item.Preco.ToString("C2")</td>
+                        <td>@item.Total.ToString("C2")</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Remover(item.ProdutoId)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body text-end">
+                <h4 class="mb-3">Total a Pagar: <span class="text-primary">@Carro.ValorTotal.ToString("C2")</span></h4>
+
+                <button class="btn btn-secondary btn-lg me-2" @onclick='() => NavManager.NavigateTo("catalogo")'>
+                    Continuar a Comprar
+                </button>
+
+                <button class="btn btn-success btn-lg" @onclick='() => NavManager.NavigateTo("pagamento")' disabled="@(!Carro.Itens.Any())">
+                    Proceder para Pagamento <i class="bi bi-arrow-right"></i>
+                </button>
+
+                @if (!string.IsNullOrEmpty(mensagemErro)) {
+                    <div class="alert alert-danger mt-3 text-start">@mensagemErro</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool processando = false;
+    private string? mensagemErro;
+
+    private async Task FinalizarEncomenda() {
+        processando = true;
+        mensagemErro = null;
+
+        var novaEncomenda = new EncomendaCreateDTO {
+            Itens = Carro.Itens.Select(i => new ItemCarrinhoDTO {
+                ProdutoId = i.ProdutoId,
+                Quantidade = i.Quantidade
+            }).ToList()
+        };
+
+        var sucesso = await EncomendaService.FinalizarEncomendaAsync(novaEncomenda);
+
+        if (sucesso) {
+            Carro.Limpar(); 
+            NavManager.NavigateTo("/encomenda-sucesso"); 
+        }
+        else {
+            mensagemErro = "Houve um erro ao processar a sua encomenda. Verifique o stock ou se a sua sessão expirou.";
+        }
+
+        processando = false;
+    }
+
+    private void Remover(int produtoId) {
+        StateHasChanged();
+    }
+}

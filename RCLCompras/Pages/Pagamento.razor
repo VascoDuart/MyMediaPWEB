@@ -1,0 +1,100 @@
+﻿@page "/pagamento"
+@using Microsoft.AspNetCore.Components.Web
+@using RCLComum.Services
+@using RCLAPI.Services
+@using RCLComum.Models
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject CarrinhoService Carro
+@inject IEncomendaService EncomendaService
+@inject NavigationManager NavManager
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Método de Pagamento (Simulação)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="pagamento" id="cartao" checked>
+                        <label class="form-check-item" for="cartao">
+                            <i class="bi bi-credit-card"></i> Cartão de Crédito (Simulado)
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="pagamento" id="mbway">
+                        <label class="form-check-item" for="mbway">
+                            <i class="bi bi-phone"></i> MB WAY
+                        </label>
+                    </div>
+                    <div class="alert alert-warning mt-4">
+                        <i class="bi bi-info-circle"></i> Esta é uma aplicação de demonstração. Nenhum valor real será cobrado.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Resumo do Pedido</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Produtos (@Carro.Itens.Count):</span>
+                        <span>@Carro.ValorTotal.ToString("C2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Portes:</span>
+                        <span>Grátis</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total:</strong>
+                        <strong class="text-primary h4">@Carro.ValorTotal.ToString("C2")</strong>
+                    </div>
+
+                    <button class="btn btn-success btn-lg w-100" @onclick="ConfirmarEPagar" disabled="@processando">
+                        @if (processando) {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        else {
+                            <span>Confirmar e Pagar</span>
+                        }
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(erro))
+                    {
+                        <p class="text-danger mt-2 small">@erro</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool processando = false;
+    private string? erro;
+
+    private async Task ConfirmarEPagar() {
+        processando = true;
+
+        var novaEncomenda = new EncomendaCreateDTO {
+            Itens = Carro.Itens.Select(i => new ItemCarrinhoDTO {
+                ProdutoId = i.ProdutoId,
+                Quantidade = i.Quantidade
+            }).ToList()
+        };
+
+        var sucesso = await EncomendaService.FinalizarEncomendaAsync(novaEncomenda);
+
+        if (sucesso) {
+            Carro.Limpar();
+            NavManager.NavigateTo("/encomenda-sucesso");
+        }
+        else {
+            erro = "Falha ao processar pagamento. Tente novamente.";
+            processando = false;
+        }
+    }
+}

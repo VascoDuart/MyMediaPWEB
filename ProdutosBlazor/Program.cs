@@ -19,6 +19,8 @@ builder.Services.AddScoped<IProdutoService, RCLAPI.Services.ProdutoService>();
 
 builder.Services.AddScoped<CarrinhoService>();
 
+builder.Services.AddScoped<IEncomendaService, EncomendaService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
@@ -36,6 +38,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddAdditionalAssemblies(typeof(RCLProdutos.Pages.Catalogo).Assembly); 
+    .AddAdditionalAssemblies(typeof(RCLProdutos.Pages.Catalogo).Assembly)
+    .AddAdditionalAssemblies(typeof(RCLCompras.Pages.Carrinho).Assembly); 
 
 app.Run();

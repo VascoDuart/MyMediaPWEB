@@ -6,7 +6,8 @@
 <Router AppAssembly="@typeof(Program).Assembly"
         AdditionalAssemblies="new[] {
                     typeof(RCLProdutos.Pages.Catalogo).Assembly,
-                    typeof(RCLComum.Pages.Login).Assembly 
+                    typeof(RCLComum.Pages.Login).Assembly,
+                    typeof(RCLCompras.Pages.Carrinho).Assembly
                 }">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
