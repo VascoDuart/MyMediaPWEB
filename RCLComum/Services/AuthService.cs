@@ -50,11 +50,21 @@ namespace RCLComum.Services {
                 }
             }
 
-            var errorData = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-            return new LoginResult {
-                Sucedido = false,
-                Erro = errorData?.ContainsKey("Message") == true ? errorData["Message"] : "Falha no login."
-            };
+            try
+            {
+                var errorData = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                return new LoginResult
+                {
+                    Sucedido = false,
+                    Erro = errorData != null && errorData.ContainsKey("message")
+                           ? errorData["message"]
+                           : (errorData != null && errorData.ContainsKey("Message") ? errorData["Message"] : "Falha no login.")
+                };
+            }
+            catch
+            {
+                return new LoginResult { Sucedido = false, Erro = "Erro inesperado no servidor." };
+            }
         }
 
         public async Task LogoutAsync() {
