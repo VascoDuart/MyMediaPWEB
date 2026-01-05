@@ -3,12 +3,18 @@
 @using Microsoft.EntityFrameworkCore
 @using MyMedia.Data
 @using MyMedia.Data.Models
-@using MyMedia.API.DTOs 
+@using MyMedia.API.DTOs
 @inject ApplicationDbContext DbContext
 @inject IJSRuntime JS
 @attribute [Authorize(Roles = "Administrador, Funcionário")]
 
 <h3 class="mb-4">Gestão de Catálogo</h3>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" class="form-control" placeholder="Pesquisar por título..." @bind="filtroTitulo" @bind:event="oninput" />
+    </div>
+</div>
 
 @if (produtos == null)
 {
@@ -27,7 +33,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var p in produtos)
+            @foreach (var p in produtosFiltrados)
             {
                 <tr>
                     <td>
@@ -41,14 +47,14 @@ else
                     </td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn btn-outline-primary btn-sm" @onclick="() => AjustarLucro(p)">
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => PrepararLucro(p)">
                                 <i class="bi bi-percent"></i> % Lucro
                             </button>
 
                             @if (!p.TemVendas)
                             {
-                                <button class="btn btn-outline-danger btn-sm" @onclick="() => ApagarProduto(p.ProdutoId)">
-                                    <i class="bi bi-trash"></i> Apagar Produto
+                                <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(p)">
+                                    <i class="bi bi-trash"></i> Apagar
                                 </button>
                             }
                         </div>
@@ -59,10 +65,63 @@ else
     </table>
 }
 
+@if (mostrarModalLucro)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajustar Margem: @produtoSelecionado?.Titulo</h5>
+                    <button type="button" class="btn-close" @onclick="() => mostrarModalLucro = false"></button>
+                </div>
+                <div class="modal-body">
+                    <label>Percentagem de Lucro (%):</label>
+                    <input type="number" class="form-control" @bind="margemInserida" />
+                    <p class="mt-2"><small>Preço Base: @produtoSelecionado?.PrecoBase.ToString("C")</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalLucro = false">Cancelar</button>
+                    <button class="btn btn-primary" @onclick="ConfirmarAjusteLucro">Aplicar e Ativar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalEliminar)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content text-white bg-danger">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Confirmar Eliminação</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body">
+                    Tem a certeza que deseja eliminar o produto <strong>@produtoSelecionado?.Titulo</strong>? Esta ação é permanente.
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-light" @onclick="() => mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-dark" @onclick="ConfirmarEliminar">Eliminar Agora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ProdutoDTO>? produtos;
+    private string filtroTitulo = "";
+
+    private bool mostrarModalLucro = false;
+    private bool mostrarModalEliminar = false;
+    private ProdutoDTO? produtoSelecionado;
+    private decimal margemInserida = 20;
 
     protected override async Task OnInitializedAsync() => await CarregarProdutos();
+
+    private IEnumerable<ProdutoDTO> produtosFiltrados =>
+        produtos?.Where(p => p.Titulo.Contains(filtroTitulo, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<ProdutoDTO>();
 
     private async Task CarregarProdutos()
     {
@@ -80,38 +139,40 @@ else
             }).ToListAsync();
     }
 
-    private async Task AjustarLucro(ProdutoDTO dto)
+    private void PrepararLucro(ProdutoDTO p)
     {
-        var resultado = await JS.InvokeAsync<string>("prompt", $"Margem % para {dto.Titulo}:", "20");
+        produtoSelecionado = p;
+        mostrarModalLucro = true;
+    }
 
-        if (decimal.TryParse(resultado, out decimal percentagem))
+    private async Task ConfirmarAjusteLucro()
+    {
+        var produtoBD = await DbContext.Produtos.FindAsync(produtoSelecionado?.ProdutoId);
+        if (produtoBD != null)
         {
-            var produtoBD = await DbContext.Produtos.FindAsync(dto.ProdutoId);
-            if (produtoBD != null)
-            {
-                produtoBD.PrecoFinal = produtoBD.PrecoBase + (produtoBD.PrecoBase * (percentagem / 100));
-                produtoBD.Estado = EstadoProduto.Ativo;
-
-                await DbContext.SaveChangesAsync();
-                await CarregarProdutos();
-                StateHasChanged(); 
-            }
+            produtoBD.PrecoFinal = produtoBD.PrecoBase + (produtoBD.PrecoBase * (margemInserida / 100));
+            produtoBD.Estado = EstadoProduto.Ativo;
+            await DbContext.SaveChangesAsync();
+            mostrarModalLucro = false;
+            await CarregarProdutos();
         }
     }
 
-    private async Task ApagarProduto(int id)
+    private void PrepararEliminar(ProdutoDTO p)
     {
-        bool confirmado = await JS.InvokeAsync<bool>("confirm", "Deseja apagar este produto?");
-        if (confirmado)
+        produtoSelecionado = p;
+        mostrarModalEliminar = true;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        var p = await DbContext.Produtos.FindAsync(produtoSelecionado?.ProdutoId);
+        if (p != null)
         {
-            var produto = await DbContext.Produtos.FindAsync(id);
-            if (produto != null)
-            {
-                DbContext.Produtos.Remove(produto);
-                await DbContext.SaveChangesAsync();
-                await CarregarProdutos();
-                StateHasChanged(); 
-            }
+            DbContext.Produtos.Remove(p);
+            await DbContext.SaveChangesAsync();
+            mostrarModalEliminar = false;
+            await CarregarProdutos();
         }
     }
 }
