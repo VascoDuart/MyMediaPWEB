@@ -2,68 +2,175 @@
 @using MyMedia.Data.Models
 @using Microsoft.EntityFrameworkCore
 @inject MyMedia.Data.ApplicationDbContext DbContext
-@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
 @rendermode InteractiveServer
 
-<h3>Modos de Disponibilização</h3>
+<h3 class="mb-4">Gestão de Modos de Disponibilização</h3>
 
-<div class="mb-3">
-    <input @bind="novoModoNome" placeholder="Ex: Aluguer, Venda..." class="form-control d-inline-block w-auto" />
-    <button class="btn btn-success" @onclick="Adicionar">Adicionar</button>
+<div class="row g-3 mb-4 p-3 bg-light border rounded align-items-end">
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Novo Modo</label>
+        <input @bind="novoModoNome" placeholder="Ex: Aluguer, Exposição..." class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-success w-100" @onclick="Adicionar">
+            <i class="bi bi-plus-circle"></i> Adicionar
+        </button>
+    </div>
 </div>
 
-@if (!string.IsNullOrEmpty(mensagemErro)) {
-    <div class="alert alert-danger">@mensagemErro</div>
+@if (!string.IsNullOrEmpty(mensagemErro))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @mensagemErro
+        <button type="button" class="btn-close" @onclick='() => mensagemErro = ""'></button>
+    </div>
 }
 
-<table class="table">
-    <thead>
+<table class="table table-hover align-middle shadow-sm">
+    <thead class="table-dark">
         <tr>
+            <th>ID</th>
             <th>Modo</th>
-            <th>Ações</th>
+            <th class="text-end">Ações</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var modo in modos) {
+        @foreach (var modo in modos)
+        {
             <tr>
-                <td>@modo.Nome</td>
+                <td>@modo.ModoDisponibilidadeId</td>
                 <td>
-                    <button class="btn btn-danger btn-sm" @onclick="() => Apagar(modo)">Eliminar</button>
+                    @if (modoEmEdicao?.ModoDisponibilidadeId == modo.ModoDisponibilidadeId)
+                    {
+                        <input @bind="modoEmEdicao.Nome" class="form-control form-control-sm" />
+                    }
+                    else
+                    {
+                        @modo.Nome
+                    }
+                </td>
+                <td class="text-end">
+                    <div class="btn-group">
+                        @if (modoEmEdicao?.ModoDisponibilidadeId == modo.ModoDisponibilidadeId)
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="SalvarEdicao">
+                                <i class="bi bi-check-lg"></i> Guardar
+                            </button>
+                            <button class="btn btn-secondary btn-sm" @onclick="() => modoEmEdicao = null">
+                                <i class="bi bi-x-lg"></i> Descartar
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => IniciarEdicao(modo)">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(modo)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        }
+                    </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
+@if (mostrarModalEliminar)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar Eliminação</h5>
+                    <button type="button" class="btn-close" @onclick="() => mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Deseja mesmo eliminar o modo: <strong>@modoSelecionado?.Nome</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminar">Eliminar Permanentemente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ModoDisponibilidade> modos = new();
     private string novoModoNome = "";
     private string mensagemErro = "";
+    private ModoDisponibilidade? modoEmEdicao;
+    private ModoDisponibilidade? modoSelecionado;
+    private bool mostrarModalEliminar = false;
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarModos();
+    }
+
+    private async Task CarregarModos()
+    {
         modos = await DbContext.ModosDisponibilidade.ToListAsync();
     }
 
-    private async Task Adicionar() {
-        if (!string.IsNullOrWhiteSpace(novoModoNome)) {
+    private async Task Adicionar()
+    {
+        if (!string.IsNullOrWhiteSpace(novoModoNome))
+        {
             DbContext.ModosDisponibilidade.Add(new ModoDisponibilidade { Nome = novoModoNome });
             await DbContext.SaveChangesAsync();
             novoModoNome = "";
-            modos = await DbContext.ModosDisponibilidade.ToListAsync();
+            await CarregarModos();
         }
     }
 
-    private async Task Apagar(ModoDisponibilidade modo) {
-        mensagemErro = "";
-        var emUso = await DbContext.Produtos.AnyAsync(p => p.ParaVenda == (modo.Nome == "Venda"));
+    private void IniciarEdicao(ModoDisponibilidade modo)
+    {
+        modoEmEdicao = new ModoDisponibilidade { ModoDisponibilidadeId = modo.ModoDisponibilidadeId, Nome = modo.Nome };
+    }
 
-        if (emUso) {
-            mensagemErro = "Não pode apagar um modo que está a ser usado por produtos.";
-            return;
+    private async Task SalvarEdicao()
+    {
+        if (modoEmEdicao != null)
+        {
+            var modoBD = await DbContext.ModosDisponibilidade.FindAsync(modoEmEdicao.ModoDisponibilidadeId);
+            if (modoBD != null)
+            {
+                modoBD.Nome = modoEmEdicao.Nome;
+                await DbContext.SaveChangesAsync();
+                modoEmEdicao = null;
+                await CarregarModos();
+            }
         }
+    }
 
-        DbContext.ModosDisponibilidade.Remove(modo);
-        await DbContext.SaveChangesAsync();
-        modos.Remove(modo);
+    private void PrepararEliminar(ModoDisponibilidade modo)
+    {
+        modoSelecionado = modo;
+        mostrarModalEliminar = true;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        if (modoSelecionado != null)
+        {
+            mensagemErro = "";
+            var emUso = await DbContext.Produtos.AnyAsync(p => p.ModoDisponibilidadeId == modoSelecionado.ModoDisponibilidadeId);
+
+            if (emUso)
+            {
+                mensagemErro = $"O modo '{modoSelecionado.Nome}' não pode ser eliminado porque existem produtos associados a ele.";
+                mostrarModalEliminar = false;
+                return;
+            }
+
+            DbContext.ModosDisponibilidade.Remove(modoSelecionado);
+            await DbContext.SaveChangesAsync();
+            mostrarModalEliminar = false;
+            await CarregarModos();
+        }
     }
 }

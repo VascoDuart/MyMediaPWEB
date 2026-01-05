@@ -26,16 +26,21 @@
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="produtos/validar">
-                        <span class="bi bi-check-circle-fill-nav-menu" aria-hidden="true"></span> Validar Produtos
-                    </NavLink>
-                </div>
-
-                <div class="nav-item px-3">
                     <NavLink class="nav-link" href="vendas">
                         <span class="bi bi-cart-check-fill-nav-menu" aria-hidden="true"></span> Gestão Vendas
                     </NavLink>
                 </div>
+
+                @if (context.User.IsInRole("Administrador"))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="gestao/relatorios">
+                            <span class="bi bi-bar-chart-line-fill-nav-menu" aria-hidden="true"></span> Relatório Vendas
+                        </NavLink>
+                    </div>
+                }
+
+                <hr class="text-white-50 mx-3" />
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="gestao/produtos">
@@ -44,8 +49,8 @@
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="gestao/utilizadores">
-                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Lista Utilizadores
+                    <NavLink class="nav-link" href="gestao/colecoes">
+                        <span class="bi bi-images-nav-menu" aria-hidden="true"></span> Exposição
                     </NavLink>
                 </div>
 
@@ -61,7 +66,13 @@
                     </NavLink>
                 </div>
 
-                <hr class="text-white-50 mx-3" /> 
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="gestao/utilizadores">
+                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Lista Utilizadores
+                    </NavLink>
+                </div>
+
+                <hr class="text-white-50 mx-3" />
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
@@ -96,17 +107,20 @@
 
 @code {
     private string? currentUrl;
-    protected override void OnInitialized() {
+    protected override void OnInitialized()
+    {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) {
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         StateHasChanged();
     }
 
-    public void Dispose() {
+    public void Dispose()
+    {
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
