@@ -2,71 +2,177 @@
 @using MyMedia.Data.Models
 @using Microsoft.EntityFrameworkCore
 @inject MyMedia.Data.ApplicationDbContext DbContext
-@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "Administrador, Funcionario")]
 @rendermode InteractiveServer
 
 <h3>Gestão de Categorias</h3>
 
-<div class="mb-3">
-    <input @bind="novaCategoriaNome" placeholder="Nome da nova categoria" class="form-control d-inline-block w-auto" />
-    <button class="btn btn-success" @onclick="Adicionar">Adicionar</button>
+<div class="row g-3 mb-4 p-3 bg-light border rounded align-items-end">
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Nova Categoria</label>
+        <input @bind="novaCategoriaNome" placeholder="Ex: Acessórios" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-success w-100" @onclick="Adicionar">
+            <i class="bi bi-plus-circle"></i> Adicionar
+        </button>
+    </div>
 </div>
 
-<table class="table">
-    <thead>
+<table class="table table-hover align-middle">
+    <thead class="table-dark">
         <tr>
             <th>Nome</th>
-            <th>Ações</th>
+            <th class="text-end">Ações</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var cat in categorias) {
+        @foreach (var cat in categorias)
+        {
             <tr>
-                <td>@cat.Nome</td>
                 <td>
-                    <button class="btn btn-danger btn-sm" @onclick="() => Apagar(cat)">Eliminar</button>
+                    @if (categoriaEmEdicao?.CategoriaId == cat.CategoriaId)
+                    {
+                        <input @bind="categoriaEmEdicao.Nome" class="form-control form-control-sm" />
+                    }
+                    else
+                    {
+                        @cat.Nome
+                    }
+                </td>
+                <td class="text-end">
+                    <div class="btn-group">
+                        @if (categoriaEmEdicao?.CategoriaId == cat.CategoriaId)
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="SalvarEdicao">
+                                <i class="bi bi-check-lg"></i> Guardar
+                            </button>
+                            <button class="btn btn-secondary btn-sm" @onclick="() => categoriaEmEdicao = null">
+                                <i class="bi bi-x-lg"></i> Descartar
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => IniciarEdicao(cat)">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(cat)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        }
+                    </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
+@if (mostrarModalEliminar)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content @(podeEliminar ? "" : "border-warning")">
+                <div class="modal-header @(podeEliminar ? "bg-danger text-white" : "bg-warning")">
+                    <h5 class="modal-title">Eliminar Categoria</h5>
+                    <button type="button" class="btn-close" @onclick="() => mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body">
+                    @if (podeEliminar)
+                    {
+                        <p>Tem a certeza que deseja eliminar a categoria <strong>@categoriaSelecionada?.Nome</strong>?</p>
+                    }
+                    else
+                    {
+                        <div class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle-fill display-4"></i>
+                            <p class="mt-2">Não pode eliminar esta categoria porque existem produtos associados a ela.</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalEliminar = false">Fechar</button>
+                    @if (podeEliminar)
+                    {
+                        <button class="btn btn-danger" @onclick="ConfirmarEliminar">Eliminar Permanentemente</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Categoria> categorias = new();
     private string novaCategoriaNome = "";
+    private Categoria? categoriaEmEdicao;
 
-    protected override async Task OnInitializedAsync() {
-        categorias = await DbContext.Categorias.ToListAsync();
+    private bool mostrarModalEliminar = false;
+    private bool podeEliminar = false;
+    private Categoria? categoriaSelecionada;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarCategorias();
     }
 
-    private async Task Adicionar() {
-        if (!string.IsNullOrWhiteSpace(novaCategoriaNome)) {
-            try {
-                var novaCat = new Categoria {
-                    Nome = novaCategoriaNome,
-                    Descricao = "" 
-                };
+    private async Task CarregarCategorias()
+    {
+        categorias = await DbContext.Categorias.OrderBy(c => c.Nome).ToListAsync();
+    }
 
-                DbContext.Categorias.Add(novaCat);
+    private async Task Adicionar()
+    {
+        if (!string.IsNullOrWhiteSpace(novaCategoriaNome))
+        {
+            var novaCat = new Categoria { Nome = novaCategoriaNome, Descricao = "" };
+            DbContext.Categorias.Add(novaCat);
+            await DbContext.SaveChangesAsync();
+            novaCategoriaNome = "";
+            await CarregarCategorias();
+        }
+    }
+
+    private void IniciarEdicao(Categoria cat)
+    {
+        categoriaEmEdicao = new Categoria
+        {
+            CategoriaId = cat.CategoriaId,
+            Nome = cat.Nome,
+            Descricao = cat.Descricao
+        };
+    }
+
+    private async Task SalvarEdicao()
+    {
+        if (categoriaEmEdicao != null)
+        {
+            var catBD = await DbContext.Categorias.FindAsync(categoriaEmEdicao.CategoriaId);
+            if (catBD != null)
+            {
+                catBD.Nome = categoriaEmEdicao.Nome;
                 await DbContext.SaveChangesAsync();
-
-                novaCategoriaNome = "";
-                categorias = await DbContext.Categorias.ToListAsync();
-                StateHasChanged();
-            }
-            catch (Exception ex) {
-                Console.WriteLine($"Erro ao adicionar: {ex.Message}");
+                categoriaEmEdicao = null;
+                await CarregarCategorias();
             }
         }
     }
 
-    private async Task Apagar(Categoria cat) {
-        var temProdutos = await DbContext.Produtos.AnyAsync(p => p.CategoriaId == cat.CategoriaId);
-        if (temProdutos) {
-            return;
+    private async Task PrepararEliminar(Categoria cat)
+    {
+        categoriaSelecionada = cat;
+        podeEliminar = !await DbContext.Produtos.AnyAsync(p => p.CategoriaId == cat.CategoriaId);
+        mostrarModalEliminar = true;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        if (categoriaSelecionada != null && podeEliminar)
+        {
+            DbContext.Categorias.Remove(categoriaSelecionada);
+            await DbContext.SaveChangesAsync();
+            mostrarModalEliminar = false;
+            await CarregarCategorias();
         }
-        DbContext.Categorias.Remove(cat);
-        await DbContext.SaveChangesAsync();
-        categorias.Remove(cat);
     }
 }

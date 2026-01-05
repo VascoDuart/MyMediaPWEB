@@ -3,13 +3,30 @@
 @using MyMedia.Data.Models
 @using Microsoft.EntityFrameworkCore
 @inject MyMedia.Data.ApplicationDbContext DbContext
-@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
 @rendermode InteractiveServer
 
 <h3>Gestão de Vendas (MyMEDIA)</h3>
 
-<table class="table">
-    <thead>
+<div class="row mb-3 g-3">
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Filtrar por Cliente</label>
+        <input type="text" class="form-control" placeholder="Nome do cliente..." @bind="filtroCliente" @bind:event="oninput" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Estado</label>
+        <select class="form-select" @bind="filtroEstado">
+            <option value="">Todos os Estados</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Pago">Pago</option>
+            <option value="Expedido">Expedido</option>
+            <option value="Rejeitado">Rejeitado</option>
+        </select>
+    </div>
+</div>
+
+<table class="table table-hover">
+    <thead class="table-dark">
         <tr>
             <th>ID</th>
             <th>Cliente</th>
@@ -19,10 +36,11 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var v in vendas) {
+        @foreach (var v in vendasFiltradas)
+        {
             <tr>
                 <td>@v.EncomendaId</td>
-                <td>@v.Cliente?.NomeCompleto</td>
+                <td>@(v.Cliente?.NomeCompleto ?? "Cliente não encontrado")</td>
                 <td>@v.ValorTotal.ToString("C")</td>
                 <td>
                     <span class="badge @(GetBadgeClass(v.EstadoEncomenda))">
@@ -30,49 +48,75 @@
                     </span>
                 </td>
                 <td>
-                    @if (v.EstadoEncomenda == "Pendente") {
-                        <button class="btn btn-primary btn-sm" @onclick='() => AtualizarStatus(v, "Pago")'>
-                            Confirmar Pagamento
-                        </button>
-                    }
-                    else if (v.EstadoEncomenda == "Pago") {
-                        <button class="btn btn-success btn-sm" @onclick='() => AtualizarStatus(v, "Expedido")'>
-                            Expedir
-                        </button>
+                    <div class="btn-group">
+                        @if (v.EstadoEncomenda == "Pendente")
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick='() => AtualizarStatus(v, "Pago")'>
+                                <i class="bi bi-cash"></i> Confirmar Pagamento
+                            </button>
+                        }
+                        else if (v.EstadoEncomenda == "Pago")
+                        {
+                            <button class="btn btn-success btn-sm" @onclick='() => AtualizarStatus(v, "Expedido")'>
+                                <i class="bi bi-box-seam"></i> Expedir
+                            </button>
 
-                        <button class="btn btn-danger btn-sm ms-1" @onclick='() => RejeitarVenda(v)'>
-                            Rejeitar
-                        </button>
-                    }
+                            <button class="btn btn-danger btn-sm ms-1" @onclick='() => RejeitarVenda(v)'>
+                                <i class="bi bi-x-circle"></i> Rejeitar
+                            </button>
+                        }
+                    </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
+@if (!vendasFiltradas.Any())
+{
+    <div class="alert alert-info text-center">Nenhuma venda encontrada para os filtros aplicados.</div>
+}
+
 @code {
     private List<Encomenda> vendas = new();
+    private string filtroCliente = "";
+    private string filtroEstado = "";
 
-    protected override async Task OnInitializedAsync() {
+    private IEnumerable<Encomenda> vendasFiltradas => vendas
+        .Where(v => (string.IsNullOrEmpty(filtroCliente) || (v.Cliente != null && v.Cliente.NomeCompleto.Contains(filtroCliente, StringComparison.OrdinalIgnoreCase))) &&
+                    (string.IsNullOrEmpty(filtroEstado) || v.EstadoEncomenda == filtroEstado));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarVendas();
+    }
+
+    private async Task CarregarVendas()
+    {
         vendas = await DbContext.Encomendas
             .Include(e => e.Cliente)
             .Include(e => e.Itens)
             .ToListAsync();
     }
 
-    private async Task AtualizarStatus(Encomenda e, string novoEstado) {
-        e.EstadoEncomenda = novoEstado; 
+    private async Task AtualizarStatus(Encomenda e, string novoEstado)
+    {
+        e.EstadoEncomenda = novoEstado;
         await DbContext.SaveChangesAsync();
         StateHasChanged();
     }
 
-    private async Task RejeitarVenda(Encomenda e) {
+    private async Task RejeitarVenda(Encomenda e)
+    {
         e.EstadoEncomenda = "Rejeitado";
 
-        if (e.Itens != null) {
-            foreach (var item in e.Itens) {
+        if (e.Itens != null)
+        {
+            foreach (var item in e.Itens)
+            {
                 var produto = await DbContext.Produtos.FindAsync(item.ProdutoId);
-                if (produto != null) {
+                if (produto != null)
+                {
                     produto.Stock += item.Quantidade;
                 }
             }
@@ -82,11 +126,12 @@
         StateHasChanged();
     }
 
-    private string GetBadgeClass(string estado) => estado switch {
+    private string GetBadgeClass(string? estado) => estado switch
+    {
         "Pendente" => "bg-warning text-dark",
         "Pago" => "bg-info",
         "Expedido" => "bg-success",
-        "Rejeitado" => "bg-danger", 
+        "Rejeitado" => "bg-danger",
         _ => "bg-secondary"
     };
 }

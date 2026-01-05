@@ -10,6 +10,7 @@
 
 <h3 class="mb-4">Gestão de Catálogo</h3>
 
+@* --- Secção de Filtros Mantida --- *@
 <div class="row g-3 mb-4 p-3 bg-light border rounded">
     <div class="col-md-4">
         <label class="form-label fw-bold">Pesquisa</label>
@@ -46,6 +47,7 @@
     </div>
 </div>
 
+@* --- Tabela e Paginação Mantidas --- *@
 @if (produtos == null)
 {
     <div class="spinner-border text-primary" role="status"></div>
@@ -63,7 +65,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var p in produtosFiltrados)
+            @foreach (var p in produtosPaginados)
             {
                 <tr>
                     <td>
@@ -74,14 +76,26 @@ else
                     <td>@p.PrecoBase.ToString("C")</td>
                     <td>@p.PrecoFinal.ToString("C")</td>
                     <td>
-                        <span class="badge @(p.Estado == "Ativo" ? "bg-success" : "bg-warning text-dark")">@p.Estado</span>
+                        <span class="badge @(p.Estado == "Ativo" ? "bg-success" : (p.Estado == "Inativo" ? "bg-dark" : "bg-warning text-dark"))">
+                            @p.Estado
+                        </span> 
                     </td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn btn-outline-primary btn-sm" @onclick="() => PrepararLucro(p)">% Lucro</button>
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => PrepararLucro(p)" title="Ajustar Lucro">
+                                <i class="bi bi-percent"></i> % Lucro
+                            </button>
+
+                            <button class="btn btn-sm @(p.Estado == "Inativo" ? "btn-success" : "btn-warning")"
+                                    @onclick="() => AlternarAtivacao(p)" title="@(p.Estado == "Inativo" ? "Ativar" : "Inativar")">
+                                <i class="bi @(p.Estado == "Inativo" ? "bi-play-fill" : "bi-pause-fill")"></i> Estado
+                            </button>
+
                             @if (!p.TemVendas)
                             {
-                                <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(p)">Apagar</button>
+                                <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(p)" title="Apagar">
+                                    <i class="bi bi-trash"></i> Apagar
+                                </button>
                             }
                         </div>
                     </td>
@@ -89,8 +103,30 @@ else
             }
         </tbody>
     </table>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <span>A mostrar @produtosPaginados.Count() de @produtosFiltrados.Count() produtos</span>
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item @(paginaAtual == 1 ? "disabled" : "")">
+                    <button class="page-item page-link" @onclick="() => MudarPagina(paginaAtual - 1)">Anterior</button>
+                </li>
+                @for (int i = 1; i <= totalPaginas; i++)
+                {
+                    var pIndex = i;
+                    <li class="page-item @(pIndex == paginaAtual ? "active" : "")">
+                        <button class="page-link" @onclick="() => MudarPagina(pIndex)">@pIndex</button>
+                    </li>
+                }
+                <li class="page-item @(paginaAtual == totalPaginas ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => MudarPagina(paginaAtual + 1)">Próximo</button>
+                </li>
+            </ul>
+        </nav>
+    </div>
 }
 
+@* --- MODAIS QUE FALTAVAM --- *@
 @if (mostrarModalLucro)
 {
     <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
@@ -103,7 +139,7 @@ else
                 <div class="modal-body">
                     <label>Percentagem de Lucro (%):</label>
                     <input type="number" class="form-control" @bind="margemInserida" />
-                    <p class="mt-2"><small>Preço Base: @produtoSelecionado?.PrecoBase.ToString("C")</small></p>
+                    <p class="mt-2 text-muted small">Preço Base: @produtoSelecionado?.PrecoBase.ToString("C")</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => mostrarModalLucro = false">Cancelar</button>
@@ -124,16 +160,17 @@ else
                     <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalEliminar = false"></button>
                 </div>
                 <div class="modal-body">
-                    Tem a certeza que deseja eliminar o produto <strong>@produtoSelecionado?.Titulo</strong>? Esta ação é permanente.
+                    Deseja eliminar permanentemente o produto <strong>@produtoSelecionado?.Titulo</strong>?
                 </div>
                 <div class="modal-footer border-0">
                     <button class="btn btn-light" @onclick="() => mostrarModalEliminar = false">Cancelar</button>
-                    <button class="btn btn-dark" @onclick="ConfirmarEliminar">Eliminar Agora</button>
+                    <button class="btn btn-dark" @onclick="ConfirmarEliminar">Eliminar</button>
                 </div>
             </div>
         </div>
     </div>
 }
+
 
 @code {
     private List<ProdutoDTO>? produtos;
@@ -143,6 +180,10 @@ else
     private string filtroTitulo = "";
     private int filtroCategoriaId = 0;
     private int filtroModoId = 0;
+
+    private int paginaAtual = 1;
+    private int itensPorPagina = 5; 
+    private int totalPaginas => (int)Math.Ceiling((double)produtosFiltrados.Count() / itensPorPagina);
 
     private bool mostrarModalLucro = false;
     private bool mostrarModalEliminar = false;
@@ -162,6 +203,9 @@ else
             (filtroCategoriaId == 0 || p.CategoriaId == filtroCategoriaId) &&
             (filtroModoId == 0 || p.ModoId == filtroModoId)
         ) ?? Enumerable.Empty<ProdutoDTO>();
+
+    private IEnumerable<ProdutoDTO> produtosPaginados =>
+        produtosFiltrados.Skip((paginaAtual - 1) * itensPorPagina).Take(itensPorPagina);
 
     private async Task CarregarProdutos()
     {
@@ -183,11 +227,32 @@ else
             }).ToListAsync();
     }
 
+    private void MudarPagina(int novaPagina)
+    {
+        paginaAtual = novaPagina;
+    }
+
+    private async Task AlternarAtivacao(ProdutoDTO dto)
+    {
+        var produtoBD = await DbContext.Produtos.FindAsync(dto.ProdutoId);
+        if (produtoBD != null)
+        {
+            produtoBD.Estado = produtoBD.Estado == EstadoProduto.Ativo
+                               ? EstadoProduto.Inativo
+                               : EstadoProduto.Ativo;
+
+            await DbContext.SaveChangesAsync();
+            await CarregarProdutos();
+            StateHasChanged();
+        }
+    }
+
     private void LimparFiltros()
     {
         filtroTitulo = "";
         filtroCategoriaId = 0;
         filtroModoId = 0;
+        paginaAtual = 1;
     }
 
     private void PrepararLucro(ProdutoDTO p)
