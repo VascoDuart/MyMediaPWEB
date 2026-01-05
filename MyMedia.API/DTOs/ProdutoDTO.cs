@@ -6,9 +6,11 @@
         public decimal PrecoBase { get; set; } 
         public decimal PrecoFinal { get; set; }
         public int Stock { get; set; }
+        public int CategoriaId { get; set; }
         public string CategoriaNome { get; set; } = string.Empty;
         public string FornecedorNome { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
+        public int ModoId { get; set; }
         public string ModoNome { get; set; } = string.Empty;
         public bool TemVendas { get; set; }
     }

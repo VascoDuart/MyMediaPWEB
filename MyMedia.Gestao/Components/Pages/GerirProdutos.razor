@@ -10,9 +10,39 @@
 
 <h3 class="mb-4">Gestão de Catálogo</h3>
 
-<div class="row mb-3">
+<div class="row g-3 mb-4 p-3 bg-light border rounded">
     <div class="col-md-4">
-        <input type="text" class="form-control" placeholder="Pesquisar por título..." @bind="filtroTitulo" @bind:event="oninput" />
+        <label class="form-label fw-bold">Pesquisa</label>
+        <input type="text" class="form-control" placeholder="Título..." @bind="filtroTitulo" @bind:event="oninput" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Categoria</label>
+        <select class="form-select" @bind="filtroCategoriaId">
+            <option value="0">Todas as Categorias</option>
+            @if (categorias != null)
+            {
+                @foreach (var cat in categorias)
+                {
+                    <option value="@cat.CategoriaId">@cat.Nome</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Disponibilização</label>
+        <select class="form-select" @bind="filtroModoId">
+            <option value="0">Todos os Modos</option>
+            @if (modos != null)
+            {
+                @foreach (var m in modos)
+                {
+                    <option value="@m.ModoDisponibilidadeId">@m.Nome</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" @onclick="LimparFiltros">Limpar</button>
     </div>
 </div>
 
@@ -38,6 +68,7 @@ else
                 <tr>
                     <td>
                         <strong>@p.Titulo</strong><br />
+                        <span class="badge bg-info text-dark">@p.CategoriaNome</span>
                         <small class="badge bg-secondary">@p.ModoNome</small>
                     </td>
                     <td>@p.PrecoBase.ToString("C")</td>
@@ -47,15 +78,10 @@ else
                     </td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn btn-outline-primary btn-sm" @onclick="() => PrepararLucro(p)">
-                                <i class="bi bi-percent"></i> % Lucro
-                            </button>
-
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => PrepararLucro(p)">% Lucro</button>
                             @if (!p.TemVendas)
                             {
-                                <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(p)">
-                                    <i class="bi bi-trash"></i> Apagar
-                                </button>
+                                <button class="btn btn-outline-danger btn-sm" @onclick="() => PrepararEliminar(p)">Apagar</button>
                             }
                         </div>
                     </td>
@@ -67,7 +93,7 @@ else
 
 @if (mostrarModalLucro)
 {
-    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -90,7 +116,7 @@ else
 
 @if (mostrarModalEliminar)
 {
-    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content text-white bg-danger">
                 <div class="modal-header border-0">
@@ -111,22 +137,37 @@ else
 
 @code {
     private List<ProdutoDTO>? produtos;
+    private List<Categoria>? categorias;
+    private List<ModoDisponibilidade>? modos;
+
     private string filtroTitulo = "";
+    private int filtroCategoriaId = 0;
+    private int filtroModoId = 0;
 
     private bool mostrarModalLucro = false;
     private bool mostrarModalEliminar = false;
     private ProdutoDTO? produtoSelecionado;
     private decimal margemInserida = 20;
 
-    protected override async Task OnInitializedAsync() => await CarregarProdutos();
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await DbContext.Categorias.ToListAsync();
+        modos = await DbContext.ModosDisponibilidade.ToListAsync();
+        await CarregarProdutos();
+    }
 
     private IEnumerable<ProdutoDTO> produtosFiltrados =>
-        produtos?.Where(p => p.Titulo.Contains(filtroTitulo, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<ProdutoDTO>();
+        produtos?.Where(p =>
+            (string.IsNullOrWhiteSpace(filtroTitulo) || p.Titulo.Contains(filtroTitulo, StringComparison.OrdinalIgnoreCase)) &&
+            (filtroCategoriaId == 0 || p.CategoriaId == filtroCategoriaId) &&
+            (filtroModoId == 0 || p.ModoId == filtroModoId)
+        ) ?? Enumerable.Empty<ProdutoDTO>();
 
     private async Task CarregarProdutos()
     {
         produtos = await DbContext.Produtos
             .Include(p => p.ModoDisponibilidade)
+            .Include(p => p.Categoria)
             .Select(p => new ProdutoDTO
             {
                 ProdutoId = p.ProdutoId,
@@ -134,20 +175,33 @@ else
                 PrecoBase = p.PrecoBase,
                 PrecoFinal = p.PrecoFinal,
                 Estado = p.Estado.ToString(),
+                CategoriaId = p.CategoriaId,
+                CategoriaNome = p.Categoria.Nome,
+                ModoId = p.ModoDisponibilidadeId,
                 ModoNome = p.ModoDisponibilidade != null ? p.ModoDisponibilidade.Nome : "N/D",
                 TemVendas = DbContext.ItensEncomenda.Any(ie => ie.ProdutoId == p.ProdutoId)
             }).ToListAsync();
     }
 
+    private void LimparFiltros()
+    {
+        filtroTitulo = "";
+        filtroCategoriaId = 0;
+        filtroModoId = 0;
+    }
+
     private void PrepararLucro(ProdutoDTO p)
     {
         produtoSelecionado = p;
+        margemInserida = 20; 
         mostrarModalLucro = true;
     }
 
     private async Task ConfirmarAjusteLucro()
     {
-        var produtoBD = await DbContext.Produtos.FindAsync(produtoSelecionado?.ProdutoId);
+        if (produtoSelecionado == null) return;
+
+        var produtoBD = await DbContext.Produtos.FindAsync(produtoSelecionado.ProdutoId);
         if (produtoBD != null)
         {
             produtoBD.PrecoFinal = produtoBD.PrecoBase + (produtoBD.PrecoBase * (margemInserida / 100));
@@ -166,7 +220,9 @@ else
 
     private async Task ConfirmarEliminar()
     {
-        var p = await DbContext.Produtos.FindAsync(produtoSelecionado?.ProdutoId);
+        if (produtoSelecionado == null) return;
+
+        var p = await DbContext.Produtos.FindAsync(produtoSelecionado.ProdutoId);
         if (p != null)
         {
             DbContext.Produtos.Remove(p);
