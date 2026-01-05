@@ -19,8 +19,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var v in vendas)
-        {
+        @foreach (var v in vendas) {
             <tr>
                 <td>@v.EncomendaId</td>
                 <td>@v.Cliente?.NomeCompleto</td>
@@ -31,17 +30,18 @@
                     </span>
                 </td>
                 <td>
-                    @* Lógica de botões baseada no estadoEncomenda atual *@
-                    @if (v.EstadoEncomenda == "Pendente")
-                    {
+                    @if (v.EstadoEncomenda == "Pendente") {
                         <button class="btn btn-primary btn-sm" @onclick='() => AtualizarStatus(v, "Pago")'>
                             Confirmar Pagamento
                         </button>
                     }
-                    else if (v.EstadoEncomenda == "Pago")
-                    {
+                    else if (v.EstadoEncomenda == "Pago") {
                         <button class="btn btn-success btn-sm" @onclick='() => AtualizarStatus(v, "Expedido")'>
                             Expedir
+                        </button>
+
+                        <button class="btn btn-danger btn-sm ms-1" @onclick='() => RejeitarVenda(v)'>
+                            Rejeitar
                         </button>
                     }
                 </td>
@@ -53,24 +53,40 @@
 @code {
     private List<Encomenda> vendas = new();
 
-    protected override async Task OnInitializedAsync()
-    {
-        // Carrega as encomendas incluindo os dados do cliente para mostrar o nome
-        vendas = await DbContext.Encomendas.Include(e => e.Cliente).ToListAsync();
+    protected override async Task OnInitializedAsync() {
+        vendas = await DbContext.Encomendas
+            .Include(e => e.Cliente)
+            .Include(e => e.Itens)
+            .ToListAsync();
     }
 
-    private async Task AtualizarStatus(Encomenda e, string novoEstado)
-    {
-        e.EstadoEncomenda = novoEstado; // Alterado de 'Estado' para 'EstadoEncomenda'
+    private async Task AtualizarStatus(Encomenda e, string novoEstado) {
+        e.EstadoEncomenda = novoEstado; 
         await DbContext.SaveChangesAsync();
         StateHasChanged();
     }
 
-    private string GetBadgeClass(string estado) => estado switch
-    {
+    private async Task RejeitarVenda(Encomenda e) {
+        e.EstadoEncomenda = "Rejeitado";
+
+        if (e.Itens != null) {
+            foreach (var item in e.Itens) {
+                var produto = await DbContext.Produtos.FindAsync(item.ProdutoId);
+                if (produto != null) {
+                    produto.Stock += item.Quantidade;
+                }
+            }
+        }
+
+        await DbContext.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private string GetBadgeClass(string estado) => estado switch {
         "Pendente" => "bg-warning text-dark",
         "Pago" => "bg-info",
         "Expedido" => "bg-success",
+        "Rejeitado" => "bg-danger", 
         _ => "bg-secondary"
     };
 }
