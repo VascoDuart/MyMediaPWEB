@@ -42,6 +42,12 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<MyMedia.Data.ApplicationDbContext>();
+    context.Database.EnsureCreated(); 
+}
+
 using (var scope = app.Services.CreateScope()) {
     var services = scope.ServiceProvider;
     try {

@@ -15,6 +15,7 @@ namespace MyMedia.Data {
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Encomenda> Encomendas { get; set; }
         public DbSet<ItemEncomenda> ItensEncomenda { get; set; }
+        public DbSet<ModoDisponibilidade> ModosDisponibilidade { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder) {
             base.OnModelCreating(builder);

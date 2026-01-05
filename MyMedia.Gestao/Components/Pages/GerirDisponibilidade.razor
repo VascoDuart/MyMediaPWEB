@@ -1,0 +1,69 @@
+﻿@page "/gestao/disponibilidade"
+@using MyMedia.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject MyMedia.Data.ApplicationDbContext DbContext
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@rendermode InteractiveServer
+
+<h3>Modos de Disponibilização</h3>
+
+<div class="mb-3">
+    <input @bind="novoModoNome" placeholder="Ex: Aluguer, Venda..." class="form-control d-inline-block w-auto" />
+    <button class="btn btn-success" @onclick="Adicionar">Adicionar</button>
+</div>
+
+@if (!string.IsNullOrEmpty(mensagemErro)) {
+    <div class="alert alert-danger">@mensagemErro</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Modo</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var modo in modos) {
+            <tr>
+                <td>@modo.Nome</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" @onclick="() => Apagar(modo)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<ModoDisponibilidade> modos = new();
+    private string novoModoNome = "";
+    private string mensagemErro = "";
+
+    protected override async Task OnInitializedAsync() {
+        modos = await DbContext.ModosDisponibilidade.ToListAsync();
+    }
+
+    private async Task Adicionar() {
+        if (!string.IsNullOrWhiteSpace(novoModoNome)) {
+            DbContext.ModosDisponibilidade.Add(new ModoDisponibilidade { Nome = novoModoNome });
+            await DbContext.SaveChangesAsync();
+            novoModoNome = "";
+            modos = await DbContext.ModosDisponibilidade.ToListAsync();
+        }
+    }
+
+    private async Task Apagar(ModoDisponibilidade modo) {
+        mensagemErro = "";
+        var emUso = await DbContext.Produtos.AnyAsync(p => p.ParaVenda == (modo.Nome == "Venda"));
+
+        if (emUso) {
+            mensagemErro = "Não pode apagar um modo que está a ser usado por produtos.";
+            return;
+        }
+
+        DbContext.ModosDisponibilidade.Remove(modo);
+        await DbContext.SaveChangesAsync();
+        modos.Remove(modo);
+    }
+}
