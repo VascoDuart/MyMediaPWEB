@@ -16,7 +16,7 @@
 }
 else
 {
-    <table class="table table-striped align-middle">
+    <table class="table table-striped align-middle shadow-sm">
         <thead class="table-dark">
             <tr>
                 <th>Nome</th>
@@ -33,7 +33,7 @@ else
                     <td>@u.User.NomeCompleto</td>
                     <td>@u.User.Email</td>
                     <td>
-                        <span class="badge @(u.User.IsAtivo ? "bg-success" : "bg-warning")">
+                        <span class="badge @(u.User.IsAtivo ? "bg-success" : "bg-warning text-dark")">
                             @(u.User.IsAtivo ? "Ativo" : "Pendente")
                         </span>
                     </td>
@@ -69,7 +69,7 @@ else
 
 @if (mostrarModalPerfil)
 {
-    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -77,21 +77,34 @@ else
                     <button type="button" class="btn-close" @onclick="() => mostrarModalPerfil = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Selecione o cargo para este utilizador:</p>
+                    <p class="small text-muted mb-3">Selecione o cargo para este utilizador:</p>
                     <div class="list-group">
-                        <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Funcionário") ? "active" : "")"
-                                @onclick='() => MudarCargo("Funcionário")'>
-                            Funcionário
-                        </button>
-                        <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Fornecedor") ? "active" : "")"
+
+                        @if (currentUserIsAdmin)
+                        {
+                            <button class="list-group-item list-group-item-action @(userSelecionado!.Roles.Contains("Funcionário") ? "active" : "")"
+                                    @onclick='() => MudarCargo("Funcionário")'>
+                                <i class="bi bi-briefcase-fill me-2"></i> Funcionário
+                            </button>
+                        }
+
+                        <button class="list-group-item list-group-item-action @(userSelecionado!.Roles.Contains("Fornecedor") ? "active" : "")"
                                 @onclick='() => MudarCargo("Fornecedor")'>
-                            Fornecedor
+                            <i class="bi bi-truck me-2"></i> Fornecedor
                         </button>
+
                         <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Cliente") ? "active" : "")"
                                 @onclick='() => MudarCargo("Cliente")'>
-                            Cliente (Padrão)
+                            <i class="bi bi-person me-2"></i> Cliente (Padrão)
                         </button>
                     </div>
+
+                    @if (!currentUserIsAdmin)
+                    {
+                        <div class="alert alert-secondary mt-3 small py-2">
+                            <i class="bi bi-info-circle me-1"></i> Apenas Administradores podem gerir o cargo de Funcionário.
+                        </div>
+                    }
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => mostrarModalPerfil = false">Fechar</button>
@@ -104,32 +117,39 @@ else
 @code {
     private List<UserRoleWrapper>? utilizadoresWrapper;
     private string? currentUserId;
+    private bool currentUserIsAdmin = false; 
     private bool mostrarModalPerfil = false;
     private UserRoleWrapper? userSelecionado;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
-        currentUserId = UserManager.GetUserId(authState.User);
+        var user = authState.User;
+
+        currentUserId = UserManager.GetUserId(user);
+
+        currentUserIsAdmin = user.IsInRole("Administrador");
+
         await CarregarUtilizadores();
     }
 
     private async Task CarregarUtilizadores()
     {
         var users = await UserManager.Users.ToListAsync();
-        utilizadoresWrapper = new List<UserRoleWrapper>();
+        var listaTemp = new List<UserRoleWrapper>();
 
         foreach (var u in users)
         {
             var roles = await UserManager.GetRolesAsync(u);
-            utilizadoresWrapper.Add(new UserRoleWrapper { User = u, Roles = roles.ToList() });
+            listaTemp.Add(new UserRoleWrapper { User = u, Roles = roles.ToList() });
         }
+        utilizadoresWrapper = listaTemp;
     }
 
     private async Task AlternarEstado(ApplicationUser user)
     {
         user.IsAtivo = !user.IsAtivo;
-        user.EmailConfirmed = user.IsAtivo; 
+        user.EmailConfirmed = user.IsAtivo;
         await UserManager.UpdateAsync(user);
         await CarregarUtilizadores();
     }
@@ -144,7 +164,10 @@ else
     {
         if (userSelecionado == null) return;
 
+        if (novoCargo == "Funcionário" && !currentUserIsAdmin) return;
+
         var rolesAtuais = await UserManager.GetRolesAsync(userSelecionado.User);
+
         var rolesToRemove = rolesAtuais.Where(r => r != "Administrador");
         await UserManager.RemoveFromRolesAsync(userSelecionado.User, rolesToRemove);
 
