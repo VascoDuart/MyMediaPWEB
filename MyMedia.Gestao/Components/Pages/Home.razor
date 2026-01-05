@@ -1,7 +1,147 @@
 ﻿@page "/"
+@using Microsoft.EntityFrameworkCore
+@using MyMedia.Data
+@using MyMedia.Data.Models
+@inject ApplicationDbContext DbContext
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard - MyMedia</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container-fluid">
+    <h1 class="mb-4">Painel de Gestão</h1>
 
-Welcome to your new app.
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase small">Total de Vendas</h6>
+                    <h2 class="display-6 fw-bold">@totalVendas.ToString("C")</h2>
+                    <i class="bi bi-currency-euro float-end opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase small">Utilizadores Pendentes</h6>
+                    <h2 class="display-6 fw-bold">@contagemPendentes</h2>
+                    <i class="bi bi-people-fill float-end opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase small">Rutura de Stock</h6>
+                    <h2 class="display-6 fw-bold">@contagemStockBaixo</h2>
+                    <i class="bi bi-exclamation-octagon float-end opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase small">Encomendas Pagas</h6>
+                    <h2 class="display-6 fw-bold">@encomendasPagas</h2>
+                    <i class="bi bi-cart-check-fill float-end opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white fw-bold">
+                    Alertas de Inventário
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Stock</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in produtosAlerta)
+                            {
+                                <tr>
+                                    <td>@p.Titulo</td>
+                                    <td><span class="badge bg-danger">@p.Stock</span></td>
+                                    <td><a href="/gestao/produtos" class="btn btn-sm btn-outline-primary py-0">Gerir</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-bold">
+                    Atividade Recente (Últimas 5 Encomendas)
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in encomendasRecentes)
+                            {
+                                <tr>
+                                    <td>#@e.EncomendaId</td>
+                                    <td>@e.ValorTotal.ToString("C")</td>
+                                    <td><span class="badge bg-info">@e.EstadoEncomenda</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private decimal totalVendas;
+    private int contagemPendentes;
+    private int contagemStockBaixo;
+    private int encomendasPagas;
+    private List<Produto> produtosAlerta = new();
+    private List<Encomenda> encomendasRecentes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        totalVendas = await DbContext.Encomendas
+            .Where(e => e.EstadoEncomenda == "Pago" || e.EstadoEncomenda == "Expedido")
+            .SumAsync(e => e.ValorTotal);
+
+        contagemPendentes = await DbContext.Users
+            .Where(u => !u.IsAtivo)
+            .CountAsync();
+
+        produtosAlerta = await DbContext.Produtos
+            .Where(p => p.Stock < 5)
+            .Take(5)
+            .ToListAsync();
+            
+        contagemStockBaixo = await DbContext.Produtos.CountAsync(p => p.Stock < 5);
+
+        encomendasPagas = await DbContext.Encomendas
+            .CountAsync(e => e.EstadoEncomenda == "Pago");
+
+        encomendasRecentes = await DbContext.Encomendas
+            .OrderByDescending(e => e.EncomendaId)
+            .Take(5)
+            .ToListAsync();
+    }
+}
