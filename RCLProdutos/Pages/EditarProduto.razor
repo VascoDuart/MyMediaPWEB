@@ -1,0 +1,98 @@
+﻿@page "/fornecedor/editar-produto/{Id:int}"
+@using Microsoft.AspNetCore.Components.Forms
+@using RCLComum.Models
+@using RCLAPI.Services
+@inject IProdutoService ProdutoService
+@inject NavigationManager NavManager
+
+<div class="container mt-4 shadow-sm p-4 bg-light rounded">
+    <h3 class="mb-4">Editar Produto #@Id</h3>
+
+    @if (carregando)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">A carregar...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleUpdate">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Título</label>
+                <InputText @bind-Value="model.Titulo" class="form-control" placeholder="Ex: Vinil - Dark Side of the Moon" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Descrição</label>
+                <InputTextArea @bind-Value="model.Descricao" class="form-control" rows="4" placeholder="Detalhes sobre o suporte media..." />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Preço Base (€)</label>
+                    <InputNumber @bind-Value="model.PrecoBase" class="form-control" />
+                    <small class="text-muted">O preço final será calculado com a margem da loja.</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Stock Disponível</label>
+                    <InputNumber @bind-Value="model.Stock" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg"></i> Guardar e Enviar para Aprovação
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="Voltar">
+                    Cancelar
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private ProdutoCreateDTO model = new();
+    private bool carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var prod = await ProdutoService.GetProdutoById(Id);
+
+        if (prod != null)
+        {
+            model = new ProdutoCreateDTO
+            {
+                Titulo = prod.Titulo,
+                Descricao = prod.Descricao,
+                PrecoBase = prod.PrecoFinal, 
+                Stock = prod.Stock,
+                CategoriaId = prod.CategoriaId,
+                ModoDisId = prod.ModoId
+            };
+            carregando = false;
+        }
+        else
+        {
+            NavManager.NavigateTo("/fornecedor/meus-produtos");
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        var sucesso = await ProdutoService.AtualizarProdutoAsync(Id, model);
+
+        if (sucesso)
+        {
+            NavManager.NavigateTo("/fornecedor/meus-produtos");
+        }
+    }
+
+    private void Voltar() => NavManager.NavigateTo("/fornecedor/meus-produtos");
+}

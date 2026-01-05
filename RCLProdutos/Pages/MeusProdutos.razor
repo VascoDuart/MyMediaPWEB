@@ -7,7 +7,6 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Os Meus Produtos</h2>
-        @* Botão "Novo Produto" removido daqui *@
     </div>
 
     @if (produtos == null)
@@ -49,8 +48,8 @@
                             </span>
                         </td>
                         <td>
-                            <button class="btn btn-primary btn-sm me-2" @onclick="() => Editar(prod.ProdutoId)">Editar</button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(prod.ProdutoId)">Eliminar</button>
+                            <button class="btn btn-primary btn-sm me-2" @onclick="@(() => Editar(prod.ProdutoId))">Editar</button>
+                            <button class="btn btn-danger btn-sm" @onclick="@(() => ConfirmarEliminar(prod.ProdutoId))">Eliminar</button>
                         </td>
                     </tr>
                 }
@@ -62,20 +61,33 @@
 @code {
     private IEnumerable<ProdutoDTO>? produtos;
 
-    protected override async Task OnInitializedAsync() => await CarregarProdutos();
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarProdutos();
+    }
 
-    private async Task CarregarProdutos() => produtos = await ProdutoService.GetMeusProdutosAsync();
+    private async Task CarregarProdutos()
+    {
+        produtos = await ProdutoService.GetMeusProdutosAsync();
+        StateHasChanged();
+    }
 
-    private void Editar(int id) => NavManager.NavigateTo($"/editar-produto/{id}");
+    private void Editar(int id)
+    {
+        NavManager.NavigateTo($"/fornecedor/editar-produto/{id}");
+    }
 
     private async Task ConfirmarEliminar(int id)
     {
-        if (await ProdutoService.EliminarProdutoAsync(id)) await CarregarProdutos();
+        var sucesso = await ProdutoService.EliminarProdutoAsync(id);
+        if (sucesso)
+        {
+            await CarregarProdutos();
+        }
     }
 
     private string GetBadgeClass(string? estado)
     {
-        // Tratamento de nulo para evitar NullReferenceException
         return (estado ?? "Pendente").ToLower() switch
         {
             "ativo" => "bg-success",

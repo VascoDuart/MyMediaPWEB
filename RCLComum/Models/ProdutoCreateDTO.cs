@@ -11,5 +11,6 @@ namespace RCLComum.Models {
         public int Stock { get; set; }
         [Required]
         public int CategoriaId { get; set; }
+        public int ModoDisId { get; set; }
     }
 }

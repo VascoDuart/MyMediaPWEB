@@ -81,21 +81,30 @@ namespace MyMedia.API.Controllers {
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador, Fornecedor")]
-        public async Task<IActionResult> PutProduto(int id, ProdutoCreateDTO dto) {
+        public async Task<IActionResult> PutProduto(int id, ProdutoCreateDTO dto)
+        {
             var produto = await _context.Produtos.FindAsync(id);
-
             if (produto == null) return NotFound();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Administrador");
+
             if (!isAdmin && produto.FornecedorId != userId) return Forbid();
 
             produto.Titulo = dto.Titulo;
             produto.Descricao = dto.Descricao;
             produto.PrecoBase = dto.PrecoBase;
-            produto.PrecoFinal = dto.PrecoBase; 
             produto.Stock = dto.Stock;
             produto.CategoriaId = dto.CategoriaId;
+
+            if (!isAdmin)
+            {
+                produto.Estado = EstadoProduto.Pendente;
+            }
+            else
+            {
+                produto.PrecoFinal = dto.PrecoBase;
+            }
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -115,13 +124,19 @@ namespace MyMedia.API.Controllers {
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> DeleteProduto(int id) {
+        public async Task<IActionResult> DeleteProduto(int id)
+        {
             var produto = await _context.Produtos.FindAsync(id);
             if (produto == null) return NotFound();
 
+            bool temVendas = await _context.ItensEncomenda.AnyAsync(ie => ie.ProdutoId == id);
+            if (temVendas)
+            {
+                return BadRequest("Não é possível eliminar um produto que já possui vendas registadas. Sugestão: Inative o produto.");
+            }
+
             _context.Produtos.Remove(produto);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
@@ -140,7 +155,7 @@ namespace MyMedia.API.Controllers {
                     PrecoFinal = p.PrecoFinal,
                     Estado = p.Estado.ToString(),
                     CategoriaNome = p.Categoria.Nome,
-                    ModoNome = p.ModoDisponibilidade.Nome,
+                    ModoNome = p.ModoDisponibilidade != null ? p.ModoDisponibilidade.Nome : "N/D",
                     TemVendas = _context.ItensEncomenda.Any(ie => ie.ProdutoId == p.ProdutoId)
                 }).ToListAsync();
         }
