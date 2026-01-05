@@ -21,16 +21,17 @@ namespace MyMedia.API.Controllers {
             return await _context.Produtos
                 .Include(p => p.Categoria)
                 .Include(p => p.Fornecedor)
-                .Where(p => p.Estado == EstadoProduto.Ativo) 
+                .Include(p => p.ModoDisponibilidade)
+                .Where(p => p.Estado == EstadoProduto.Ativo)
                 .Select(p => new ProdutoDTO {
                     ProdutoId = p.ProdutoId,
                     Titulo = p.Titulo,
-                    Descricao = p.Descricao,
+                    PrecoBase = p.PrecoBase, 
                     PrecoFinal = p.PrecoFinal,
-                    Stock = p.Stock,
-                    CategoriaNome = p.Categoria.Nome,
+                    Estado = p.Estado.ToString(),
                     FornecedorNome = p.Fornecedor.NomeCompleto,
-                    Estado = p.Estado.ToString()
+                    ModoNome = p.ModoDisponibilidade != null ? p.ModoDisponibilidade.Nome : "N/D",
+                    TemVendas = _context.ItensEncomenda.Any(ie => ie.ProdutoId == p.ProdutoId)
                 }).ToListAsync();
         }
 
@@ -121,6 +122,41 @@ namespace MyMedia.API.Controllers {
             _context.Produtos.Remove(produto);
             await _context.SaveChangesAsync();
 
+            return NoContent();
+        }
+
+        [HttpGet("gestao")]
+        [Authorize(Roles = "Administrador, Funcionário")]
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosGestao()
+        {
+            return await _context.Produtos
+                .Include(p => p.Categoria)
+                .Include(p => p.ModoDisponibilidade)
+                .Select(p => new ProdutoDTO
+                {
+                    ProdutoId = p.ProdutoId,
+                    Titulo = p.Titulo,
+                    PrecoBase = p.PrecoBase,
+                    PrecoFinal = p.PrecoFinal,
+                    Estado = p.Estado.ToString(),
+                    CategoriaNome = p.Categoria.Nome,
+                    ModoNome = p.ModoDisponibilidade.Nome,
+                    TemVendas = _context.ItensEncomenda.Any(ie => ie.ProdutoId == p.ProdutoId)
+                }).ToListAsync();
+        }
+
+        [HttpPut("{id}/atualizar-preco")]
+        [Authorize(Roles = "Administrador, Funcionário")]
+        public async Task<IActionResult> AtualizarPreco(int id, [FromBody] decimal novoPrecoFinal)
+        {
+            var produto = await _context.Produtos.FindAsync(id);
+            if (produto == null) return NotFound();
+
+            produto.PrecoFinal = novoPrecoFinal;
+
+            produto.Estado = EstadoProduto.Ativo;
+
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 

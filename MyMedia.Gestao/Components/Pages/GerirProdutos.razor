@@ -1,0 +1,117 @@
+﻿@page "/gestao/produtos"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using MyMedia.Data
+@using MyMedia.Data.Models
+@using MyMedia.API.DTOs 
+@inject ApplicationDbContext DbContext
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "Administrador, Funcionário")]
+
+<h3 class="mb-4">Gestão de Catálogo</h3>
+
+@if (produtos == null)
+{
+    <div class="spinner-border text-primary" role="status"></div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Produto</th>
+                <th>Preço Base</th>
+                <th>Preço Final</th>
+                <th>Estado</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in produtos)
+            {
+                <tr>
+                    <td>
+                        <strong>@p.Titulo</strong><br />
+                        <small class="badge bg-secondary">@p.ModoNome</small>
+                    </td>
+                    <td>@p.PrecoBase.ToString("C")</td>
+                    <td>@p.PrecoFinal.ToString("C")</td>
+                    <td>
+                        <span class="badge @(p.Estado == "Ativo" ? "bg-success" : "bg-warning text-dark")">@p.Estado</span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => AjustarLucro(p)">
+                                <i class="bi bi-percent"></i> % Lucro
+                            </button>
+
+                            @if (!p.TemVendas)
+                            {
+                                <button class="btn btn-outline-danger btn-sm" @onclick="() => ApagarProduto(p.ProdutoId)">
+                                    <i class="bi bi-trash"></i> Apagar Produto
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ProdutoDTO>? produtos;
+
+    protected override async Task OnInitializedAsync() => await CarregarProdutos();
+
+    private async Task CarregarProdutos()
+    {
+        produtos = await DbContext.Produtos
+            .Include(p => p.ModoDisponibilidade)
+            .Select(p => new ProdutoDTO
+            {
+                ProdutoId = p.ProdutoId,
+                Titulo = p.Titulo,
+                PrecoBase = p.PrecoBase,
+                PrecoFinal = p.PrecoFinal,
+                Estado = p.Estado.ToString(),
+                ModoNome = p.ModoDisponibilidade != null ? p.ModoDisponibilidade.Nome : "N/D",
+                TemVendas = DbContext.ItensEncomenda.Any(ie => ie.ProdutoId == p.ProdutoId)
+            }).ToListAsync();
+    }
+
+    private async Task AjustarLucro(ProdutoDTO dto)
+    {
+        var resultado = await JS.InvokeAsync<string>("prompt", $"Margem % para {dto.Titulo}:", "20");
+
+        if (decimal.TryParse(resultado, out decimal percentagem))
+        {
+            var produtoBD = await DbContext.Produtos.FindAsync(dto.ProdutoId);
+            if (produtoBD != null)
+            {
+                produtoBD.PrecoFinal = produtoBD.PrecoBase + (produtoBD.PrecoBase * (percentagem / 100));
+                produtoBD.Estado = EstadoProduto.Ativo;
+
+                await DbContext.SaveChangesAsync();
+                await CarregarProdutos();
+                StateHasChanged(); 
+            }
+        }
+    }
+
+    private async Task ApagarProduto(int id)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", "Deseja apagar este produto?");
+        if (confirmado)
+        {
+            var produto = await DbContext.Produtos.FindAsync(id);
+            if (produto != null)
+            {
+                DbContext.Produtos.Remove(produto);
+                await DbContext.SaveChangesAsync();
+                await CarregarProdutos();
+                StateHasChanged(); 
+            }
+        }
+    }
+}

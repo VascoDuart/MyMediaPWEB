@@ -23,5 +23,7 @@ namespace MyMedia.Data.Models {
 
         public int CategoriaId { get; set; }
         public Categoria Categoria { get; set; }
+        public int ModoDisponibilidadeId { get; set; }
+        public virtual ModoDisponibilidade ModoDisponibilidade { get; set; }
     }
 }
