@@ -1,62 +1,162 @@
 ﻿@page "/gestao/utilizadores"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using MyMedia.Data.Models
 @inject UserManager<ApplicationUser> UserManager
-@inject IHttpContextAccessor httpContextAccessor
+@inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "Administrador, Funcionário")]
 
-<h3>Gestão de Utilizadores (Clientes/Fornecedores)</h3>
+<h3 class="mb-4">Gestão de Utilizadores</h3>
 
-@if (utilizadores == null) {
-    <p>A carregar utilizadores...</p>
+@if (utilizadoresWrapper == null)
+{
+    <div class="spinner-border text-primary" role="status"></div>
 }
-else {
-    <table class="table">
-        <thead>
+else
+{
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
             <tr>
-                <th>Email</th>
                 <th>Nome</th>
+                <th>Email</th>
                 <th>Estado</th>
+                <th>Cargos</th>
                 <th>Ações</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in utilizadores)
+            @foreach (var u in utilizadoresWrapper)
             {
                 <tr>
-                    <td>@user.Email</td>
-                    <td>@user.NomeCompleto</td>
+                    <td>@u.User.NomeCompleto</td>
+                    <td>@u.User.Email</td>
                     <td>
-                        <span class="badge @(user.IsAtivo ? "bg-success" : "bg-warning")">
-                            @(user.IsAtivo ? "Ativo" : "Pendente")
+                        <span class="badge @(u.User.IsAtivo ? "bg-success" : "bg-warning")">
+                            @(u.User.IsAtivo ? "Ativo" : "Pendente")
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm @(user.IsAtivo ? "btn-danger" : "btn-primary")"
-                                @onclick="() => AlternarEstado(user)">
-                            @(user.IsAtivo ? "Inativar" : "Ativar")
-                        </button>
+                        @foreach (var role in u.Roles)
+                        {
+                            <span class="badge bg-info text-dark me-1">@role</span>
+                        }
+                    </td>
+                    <td>
+                        @if (u.User.Id != currentUserId)
+                        {
+                            <div class="btn-group">
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => AbrirModalPerfil(u)">
+                                    <i class="bi bi-person-gear"></i> Perfil
+                                </button>
+                                <button class="btn btn-sm @(u.User.IsAtivo ? "btn-outline-danger" : "btn-outline-success")"
+                                        @onclick="() => AlternarEstado(u.User)">
+                                    @(u.User.IsAtivo ? "Inativar" : "Ativar")
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted small"><i class="bi bi-lock-fill"></i> Própria Conta</span>
+                        }
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-   }
+}
+
+@if (mostrarModalPerfil)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerir Perfil: @userSelecionado?.User.NomeCompleto</h5>
+                    <button type="button" class="btn-close" @onclick="() => mostrarModalPerfil = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Selecione o cargo para este utilizador:</p>
+                    <div class="list-group">
+                        <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Funcionário") ? "active" : "")"
+                                @onclick='() => MudarCargo("Funcionário")'>
+                            Funcionário
+                        </button>
+                        <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Fornecedor") ? "active" : "")"
+                                @onclick='() => MudarCargo("Fornecedor")'>
+                            Fornecedor
+                        </button>
+                        <button class="list-group-item list-group-item-action @(userSelecionado.Roles.Contains("Cliente") ? "active" : "")"
+                                @onclick='() => MudarCargo("Cliente")'>
+                            Cliente (Padrão)
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalPerfil = false">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
-    private List<ApplicationUser> utilizadores;
+    private List<UserRoleWrapper>? utilizadoresWrapper;
+    private string? currentUserId;
+    private bool mostrarModalPerfil = false;
+    private UserRoleWrapper? userSelecionado;
 
-    protected override async Task OnInitializedAsync() {
-        utilizadores = await UserManager.Users.ToListAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        currentUserId = UserManager.GetUserId(authState.User);
+        await CarregarUtilizadores();
     }
 
-    private async Task AlternarEstado(ApplicationUser user) {
-        var adminLogado = await UserManager.GetUserAsync(httpContextAccessor.HttpContext.User);
-        if (user.Id == adminLogado?.Id) return;
+    private async Task CarregarUtilizadores()
+    {
+        var users = await UserManager.Users.ToListAsync();
+        utilizadoresWrapper = new List<UserRoleWrapper>();
 
+        foreach (var u in users)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            utilizadoresWrapper.Add(new UserRoleWrapper { User = u, Roles = roles.ToList() });
+        }
+    }
+
+    private async Task AlternarEstado(ApplicationUser user)
+    {
         user.IsAtivo = !user.IsAtivo;
+        user.EmailConfirmed = user.IsAtivo; 
         await UserManager.UpdateAsync(user);
+        await CarregarUtilizadores();
+    }
+
+    private void AbrirModalPerfil(UserRoleWrapper wrapper)
+    {
+        userSelecionado = wrapper;
+        mostrarModalPerfil = true;
+    }
+
+    private async Task MudarCargo(string novoCargo)
+    {
+        if (userSelecionado == null) return;
+
+        var rolesAtuais = await UserManager.GetRolesAsync(userSelecionado.User);
+        var rolesToRemove = rolesAtuais.Where(r => r != "Administrador");
+        await UserManager.RemoveFromRolesAsync(userSelecionado.User, rolesToRemove);
+
+        await UserManager.AddToRoleAsync(userSelecionado.User, novoCargo);
+
+        mostrarModalPerfil = false;
+        await CarregarUtilizadores();
+    }
+
+    public class UserRoleWrapper
+    {
+        public ApplicationUser User { get; set; } = default!;
+        public List<string> Roles { get; set; } = new();
     }
 }
