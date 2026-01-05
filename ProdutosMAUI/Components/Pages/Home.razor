@@ -1,5 +1,17 @@
 ﻿@page "/"
+@inject RCLAPI.Services.IProdutoService ProdutoService
 
-<h1>Hello, world!</h1>
+<div class="container text-center mt-4">
+    <h1>Bem-vindo à MyMEDIA</h1>
+    <p>A sua plataforma de filmes, música e acessórios.</p>
 
-Welcome to your new app.
+    <div class="card mx-auto" style="max-width: 400px;">
+        <div class="card-header bg-primary text-white">
+            Produto em Destaque
+        </div>
+        <div class="card-body">
+            <p>Explore o nosso catálogo para ver as novidades!</p>
+            <a href="catalogo" class="btn btn-success">Ir para o Catálogo</a>
+        </div>
+    </div>
+</div>
